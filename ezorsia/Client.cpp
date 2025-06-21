@@ -161,6 +161,14 @@ void Client::UpdateGameStartup() {
 	//以下优化字符串显示
 	Memory::PatchNop(0x008E4252, 2);	//修复道具介绍中，中文换行的问题
 	Memory::CodeCave(skillToolTipNew, 0x008F383E, 6);	//修复技能描述中文换行乱码的问题
+
+	// 报错信息中文
+	Memory::WriteByte(0x0068DE1F + 1, 0x86);
+	Memory::WriteByte(0x0068DFBD + 1, 0x86);
+	Memory::WriteByte(0x0068E0E7 + 1, 0x86);
+	Memory::WriteByte(0x0068E534 + 1, 0x86);
+	Memory::WriteByte(0x0068E65D + 1, 0x86);
+	Memory::WriteByte(0x0068E709 + 1, 0x86);
 }
 
 void Client::UpdateResolution() {
