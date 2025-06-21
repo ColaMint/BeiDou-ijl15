@@ -1593,3 +1593,48 @@ __declspec(naked) void wordMapUIcc()
 		jmp wordMapUIccRtn
 	}
 }
+
+/* 修复技能描述中文换行乱码的问题 */
+int charLen = 55;
+void calcCharLen(const char* word)
+{
+	// std::cout << "文字 " << word << std::endl;
+	const std::string str = std::string(word);
+	auto firstByte = static_cast<unsigned char>(str[0]);
+	// auto secondByte = static_cast<unsigned char>(str[55]);
+
+	if (str.length() < 55)
+	{
+		charLen = 55;
+		return;
+	}
+	for (int i = 0; i < 60; i++)
+	{
+		firstByte = static_cast<unsigned char>(str[i]);
+		if (firstByte >= 0x81 && firstByte <= 0xFE)
+		{
+			i++; // 是中文字符跳过双字节
+			continue;
+		}
+		if (i >= 55)
+		{
+			charLen = i;
+			break;
+		}
+	}
+}
+
+constexpr DWORD skillToolTipNewRtn = 0x008F3844;
+__declspec(naked) void skillToolTipNew()
+{
+	__asm {
+		mov eax, [ebp + 0Ch]
+		push eax
+		call calcCharLen
+		pop eax
+		mov eax, charLen
+		mov[ebp - 1Ch], eax
+		lea eax, [ebp - 30h]
+		jmp skillToolTipNewRtn
+	}
+}

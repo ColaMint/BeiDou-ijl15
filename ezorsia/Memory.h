@@ -15,5 +15,23 @@ public:
 	static void CodeCave(void* ptrCodeCave, DWORD dwOriginAddress, int nNOPCount);
 	static void WriteByteArray(DWORD dwOriginAddress, unsigned char* ucValue, const int ucValueSize);
 	static bool UseVirtuProtect;
+    static void PatchNop(DWORD dwOriginAddress, int nCount) {
+        if (nCount <= 0) return;
+
+        // 根据需要设置内存保护
+        DWORD oldProtect;
+        if (UseVirtuProtect) {
+            VirtualProtect((LPVOID)dwOriginAddress, nCount, PAGE_EXECUTE_READWRITE, &oldProtect);
+        }
+
+        // 填充NOP指令(0x90)
+        memset((void*)dwOriginAddress, 0x90, nCount);
+
+        // 恢复内存保护
+        if (UseVirtuProtect) {
+            DWORD temp;
+            VirtualProtect((LPVOID)dwOriginAddress, nCount, oldProtect, &temp);
+        }
+    }
 };
 
