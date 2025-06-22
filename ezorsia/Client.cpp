@@ -4,30 +4,30 @@
 #include "FixIme.h"
 #include "FixBuddy.h"
 
-int Client::m_nGameHeight = 720;
-int Client::m_nGameWidth = 1280;
-int Client::MsgAmount = 26;
-bool Client::CustomLoginFrame = true;
-bool Client::WindowedMode = true;
-bool Client::RemoveLogos = true;
-int Client::setDamageCap = 199999;
-int Client::setMAtkCap = 1999;
-int Client::setAccCap = 999;
-int Client::setAvdCap = 999;
-double Client::setAtkOutCap = 199999;
-bool Client::useTubi = false;
-bool Client::bigLoginFrame = false;
-bool Client::SwitchChinese = false;
-int Client::speedMovementCap = 140;
-bool Client::noPassword = false;
-bool Client::debug = false;
-bool Client::climbSpeedAuto = false;
-float Client::climbSpeed = 1.0;
-unsigned char Client::imeType = 1;
-std::string Client::ServerIP_AddressFromINI = "127.0.0.1";
-int Client::serverIP_Port = 8484;
-bool Client::talkRepeat = false;
-int Client::talkTime = 2000;
+int Client::m_nGameHeight = 720; // 游戏窗口高度
+int Client::m_nGameWidth = 1280; // 游戏窗口宽度
+int Client::MsgAmount = 26; // 消息显示数量
+bool Client::CustomLoginFrame = true; // 使用自定义登录界面
+bool Client::WindowedMode = true; // 窗口模式
+bool Client::RemoveLogos = true; // 移除启动Logo
+int Client::setDamageCap = 199999; // 物理伤害上限
+int Client::setMAtkCap = 1999; // 魔法攻击上限
+int Client::setAccCap = 999; // 命中上限
+int Client::setAvdCap = 999; // 回避上限
+double Client::setAtkOutCap = 199999; // 输出显示上限
+bool Client::useTubi = false; // 使用Tubi功能
+bool Client::bigLoginFrame = false; // 大型登录框
+bool Client::SwitchChinese = false; // 切换中文模式
+int Client::speedMovementCap = 140; // 移动速度上限
+bool Client::noPassword = false; // 无密码模式
+bool Client::debug = false; // 调试模式
+bool Client::climbSpeedAuto = false; // 自动攀爬速度
+float Client::climbSpeed = 1.0; // 攀爬速度
+unsigned char Client::imeType = 1; // 输入法类型
+std::string Client::ServerIP_AddressFromINI = "127.0.0.1"; // 服务器IP地址
+int Client::serverIP_Port = 8484; // 服务器端口
+bool Client::talkRepeat = false; // 重复说话
+int Client::talkTime = 2000; // 说话间隔时间
 
 void Client::UpdateGameStartup() {
 	//Memory::CodeCave(cc0x0044E550, dw0x0044E550, dw0x0044E550Nops); //run from packed client //skip //sub_44E546
@@ -157,6 +157,18 @@ void Client::UpdateGameStartup() {
 	Memory::WriteInt(0x00780743 + 3, speedMovementCap); //set speed cap //ty ronan
 	Memory::WriteInt(0x008C4286 + 1, speedMovementCap); //set speed cap //ty ronan
 	Memory::WriteInt(0x0094D91E + 1, speedMovementCap); //set speed cap //ty ronan
+
+	//以下优化字符串显示
+	Memory::PatchNop(0x008E4252, 2);	//修复道具介绍中，中文换行的问题
+	Memory::CodeCave(skillToolTipNew, 0x008F383E, 6);	//修复技能描述中文换行乱码的问题
+
+	// 报错信息中文
+	Memory::WriteByte(0x0068DE1F + 1, 0x86);
+	Memory::WriteByte(0x0068DFBD + 1, 0x86);
+	Memory::WriteByte(0x0068E0E7 + 1, 0x86);
+	Memory::WriteByte(0x0068E534 + 1, 0x86);
+	Memory::WriteByte(0x0068E65D + 1, 0x86);
+	Memory::WriteByte(0x0068E709 + 1, 0x86);
 }
 
 void Client::UpdateResolution() {
