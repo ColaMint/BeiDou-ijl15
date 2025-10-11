@@ -136,3 +136,27 @@ void Memory::CodeCave(void* ptrCodeCave, const DWORD dwOriginAddress, const int 
 		WriteInt(dwOriginAddress + 1, (int)(((int)ptrCodeCave - (int)dwOriginAddress) - 5)); // [jmp(1 byte)][address(4 bytes)] //this means you need to clear a space of at least 5 bytes (nNOPCount bytes)
 	} __except (EXCEPTION_EXECUTE_HANDLER) {}
 }
+
+void Memory::PatchNop(DWORD dwOriginAddress, int nCount) {
+    if (nCount <= 0) return;
+
+    // 根据需要设置内存保护
+    DWORD oldProtect;
+    if (UseVirtuProtect) {
+        VirtualProtect((LPVOID)dwOriginAddress, nCount, PAGE_EXECUTE_READWRITE, &oldProtect);
+    }
+
+    // 填充NOP指令(0x90)
+    memset((void*)dwOriginAddress, 0x90, nCount);
+
+    // 恢复内存保护
+    if (UseVirtuProtect) {
+        DWORD temp;
+        VirtualProtect((LPVOID)dwOriginAddress, nCount, oldProtect, &temp);
+    }
+}
+
+void Memory::PatchJump(const DWORD dwOriginAddress, const unsigned int address) {
+    WriteByte(dwOriginAddress, 0xE9);
+    WriteInt(dwOriginAddress + 1, address);
+}

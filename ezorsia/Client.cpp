@@ -29,9 +29,10 @@ int Client::serverIP_Port = 8484; // 服务器端口
 bool Client::talkRepeat = false; // 重复说话
 int Client::talkTime = 2000; // 说话间隔时间
 bool Client::fullScreenPetLooting = false; // 全屏宠吸
-bool Client::closeRangeShooting = false; // 近身射击
+bool Client::closeRangeShooting = false; // 弓标不挥拳
 bool Client::dropCashItem = false; // 丢弃现金道具
 bool Client::ignoreGender = false; // 忽略性别
+bool Client::freeSPAllocation = false; // 自由分配技能点
 
 void Client::UpdateGameStartup() {
 	//Memory::CodeCave(cc0x0044E550, dw0x0044E550, dw0x0044E550Nops); //run from packed client //skip //sub_44E546
@@ -985,5 +986,11 @@ void Client::DropCashItem() {
 void Client::IgnoreGender() {
 	if (ignoreGender) {
 		Memory::PatchNop(0x00460AED, 2);
+	}
+}
+
+void Client::FreeSPAllocation() {
+	if (freeSPAllocation) {
+		Memory::PatchJump(0x008AD01A, 0x008AD227 - (0x008AD01A + 5));
 	}
 }
