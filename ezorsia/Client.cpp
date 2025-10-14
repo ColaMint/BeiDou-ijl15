@@ -991,6 +991,6 @@ void Client::IgnoreGender() {
 
 void Client::FreeSPAllocation() {
 	if (freeSPAllocation) {
-		Memory::PatchJump(0x008AD01A, 0x008AD227 - (0x008AD01A + 5));
+		Memory::PatchJump(0x008AD01A, 0x008AD227);
 	}
 }

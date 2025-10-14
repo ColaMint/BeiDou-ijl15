@@ -156,7 +156,13 @@ void Memory::PatchNop(DWORD dwOriginAddress, int nCount) {
     }
 }
 
-void Memory::PatchJump(const DWORD dwOriginAddress, const unsigned int address) {
+void Memory::PatchJump(const DWORD dwOriginAddress, const DWORD target) {
+    // º∆À„ rel32£∫target - (origin + 5)
+    int rel = (int)((int)target - (int)(dwOriginAddress + 5));
+
+    // –¥ JMP opcode
     WriteByte(dwOriginAddress, 0xE9);
-    WriteInt(dwOriginAddress + 1, address);
+
+    // –¥ rel32£®little-endian£©
+    WriteInt(dwOriginAddress + 1, (unsigned int)rel);
 }

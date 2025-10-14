@@ -3,6 +3,7 @@
 class Memory
 {
 public:
+	static bool UseVirtuProtect;
 	static bool SetHook(bool attach, void** ptrTarget, void* ptrDetour);
 	static void FillBytes(DWORD dwOriginAddress, unsigned char ucValue, int nCount);
 	static void ReplaceString(DWORD dwOriginAddress, const char* sContent, const char* oContent);
@@ -14,8 +15,7 @@ public:
 	static void WriteDouble(DWORD dwOriginAddress, double dwValue);
 	static void CodeCave(void* ptrCodeCave, DWORD dwOriginAddress, int nNOPCount);
 	static void WriteByteArray(DWORD dwOriginAddress, unsigned char* ucValue, const int ucValueSize);
-	static bool UseVirtuProtect;
     static void PatchNop(DWORD dwOriginAddress, int nCount);
-    static void PatchJump(DWORD dwOriginAddress, unsigned int nCount);
+    static void PatchJump(DWORD dwOriginAddress, DWORD target);
 };
 
