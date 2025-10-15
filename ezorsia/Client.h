@@ -21,6 +21,7 @@ public:
 	static void DropCashItem();
 	static void IgnoreGender();
 	static void FreeSPAllocation();
+	static void FixWine();
 	static const int m_nIGCipherHash = 0XC65053F2;
 	static int m_nGameHeight;
 	static int m_nGameWidth;
@@ -52,4 +53,5 @@ public:
 	static bool dropCashItem;
 	static bool ignoreGender;
 	static bool freeSPAllocation;
+	static bool fixWine;
 };

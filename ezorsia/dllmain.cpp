@@ -28,15 +28,16 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			Client::CustomLoginFrame = reader.GetBoolean("general", "CustomLoginFrame", true);
 			Client::WindowedMode = reader.GetBoolean("general", "WindowedMode", true);
 			Client::RemoveLogos = reader.GetBoolean("general", "RemoveLogos", true);
+			Client::bigLoginFrame = reader.GetBoolean("general", "bigLoginFrame", false);
+			Client::SwitchChinese = reader.GetBoolean("general", "SwitchChinese", false);
 			Memory::UseVirtuProtect = reader.GetBoolean("general", "UseVirtuProtect", true);
+			Client::fixWine = reader.GetBoolean("general", "fixWine", false);
 			Client::setDamageCap = reader.GetReal("optional", "setDamageCap", 199999);
 			Client::setMAtkCap = reader.GetReal("optional", "setMAtkCap", 1999);
 			Client::setAccCap = reader.GetReal("optional", "setAccCap", 999);
 			Client::setAvdCap = reader.GetReal("optional", "setAvdCap", 999);
 			Client::setAtkOutCap = reader.GetReal("optional", "setAtkOutCap", 199999);
 			Client::useTubi = reader.GetBoolean("optional", "useTubi", false);
-			Client::bigLoginFrame = reader.GetBoolean("general", "bigLoginFrame", false);
-			Client::SwitchChinese = reader.GetBoolean("general", "SwitchChinese", false);
 			Client::speedMovementCap = reader.GetInteger("optional", "speedMovementCap", 140);
 			Client::jumpCap = reader.GetInteger("optional", "jumpCap", 123);
 			Client::debug = reader.GetBoolean("debug", "debug", false);
@@ -97,6 +98,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		Client::DropCashItem();
 		Client::IgnoreGender();
 		Client::FreeSPAllocation();
+		Client::FixWine();
 		std::cout << "GetModuleFileName hook created" << std::endl;
 		ijl15::CreateHook(); //NMCO::CreateHook();
 		std::cout << "NMCO hook initialized" << std::endl;

@@ -33,6 +33,7 @@ bool Client::closeRangeShooting = false; // 弓标不挥拳
 bool Client::dropCashItem = false; // 丢弃现金道具
 bool Client::ignoreGender = false; // 忽略性别
 bool Client::freeSPAllocation = false; // 自由分配技能点
+bool Client::fixWine = false; // 修复在wine中运行时选角色闪退的问题（副作用是服务器无法获取客户端正确的MAC地址）
 
 void Client::UpdateGameStartup() {
 	//Memory::CodeCave(cc0x0044E550, dw0x0044E550, dw0x0044E550Nops); //run from packed client //skip //sub_44E546
@@ -992,5 +993,11 @@ void Client::IgnoreGender() {
 void Client::FreeSPAllocation() {
 	if (freeSPAllocation) {
 		Memory::PatchJump(0x008AD01A, 0x008AD227);
+	}
+}
+
+void Client::FixWine() {
+	if (fixWine) {
+		Memory::PatchJump(0x005FCE32, 0x005FCED0);
 	}
 }
