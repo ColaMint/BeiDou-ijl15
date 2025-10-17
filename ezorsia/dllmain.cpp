@@ -58,6 +58,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			Client::ignoreGender = reader.GetBoolean("optional", "ignoreGender", false);
 			Client::freeSPAllocation = reader.GetBoolean("optional", "freeSPAllocation", false);
 			Client::nonStopAttack = reader.GetBoolean("optional", "nonStopAttack", false);
+			Client::instantTextDisplay = reader.GetBoolean("optional", "instantTextDisplay", false);
 		}
 
 		Hook_CreateMutexA(true); //multiclient //ty darter, angel, and alias!
@@ -101,6 +102,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		Client::FreeSPAllocation();
 		Client::FixWine();
 		Client::NonStopAttack();
+		Client::InstantTextDisplay();
 		std::cout << "GetModuleFileName hook created" << std::endl;
 		ijl15::CreateHook(); //NMCO::CreateHook();
 		std::cout << "NMCO hook initialized" << std::endl;

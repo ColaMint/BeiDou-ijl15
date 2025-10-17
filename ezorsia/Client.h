@@ -23,6 +23,7 @@ public:
 	static void FreeSPAllocation();
 	static void FixWine();
 	static void NonStopAttack();
+	static void InstantTextDisplay();
 	static const int m_nIGCipherHash = 0XC65053F2;
 	static int m_nGameHeight;
 	static int m_nGameWidth;
@@ -56,4 +57,5 @@ public:
 	static bool freeSPAllocation;
 	static bool fixWine;
 	static bool nonStopAttack;
+	static bool instantTextDisplay;
 };
