@@ -95,7 +95,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		Client::MoreHook();
 		BossHP::Hook();
 		Client::WorldMap();
-		Client::FullScreenPetLooting();
+		//Client::FullScreenPetLooting();
 		Client::CloseRangeShooting();
 		Client::DropCashItem();
 		Client::IgnoreGender();
