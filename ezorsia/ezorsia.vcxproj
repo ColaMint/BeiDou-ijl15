@@ -175,6 +175,7 @@
     <ClInclude Include="Client.h" />
     <ClInclude Include="FixBuddy.h" />
     <ClInclude Include="FixIme.h" />
+    <ClInclude Include="HpMpAlert.h" />
     <ClInclude Include="ijl15.h" />
     <ClInclude Include="MapleClientCollectionTypes\TSecType.h" />
     <ClInclude Include="MapleClientCollectionTypes\ZAllocAnonSelector.h" />
@@ -230,6 +231,11 @@
     <CopyFileToFolders Include="config.ini">
       <FileType>Document</FileType>
     </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="HpMpAlert.cpp">
+      <FileType>Document</FileType>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
