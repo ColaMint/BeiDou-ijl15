@@ -16,6 +16,7 @@ public:
 	static void NoPassword();
 	static void MoreHook();
 	static void WorldMap();
+	static void RefreshRate();
 	static void FullScreenPetLooting();
 	static void CloseRangeShooting();
 	static void DropCashItem();

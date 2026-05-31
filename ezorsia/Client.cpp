@@ -1015,3 +1015,36 @@ void Client::InstantTextDisplay() {
 		Memory::PatchNop(0x009A4482, 2);
 	}
 }
+
+#include "detours.h"
+
+typedef void(_cdecl* pfunPcCreateObject_IWzPackage)(int param1, DWORD param2, DWORD param3);
+pfunPcCreateObject_IWzPackage g_PcCreateObject_IWzPackage = nullptr;
+
+void
+_cdecl
+HookPcCreateObject_IWzPackage(
+	int param1
+	, DWORD param2
+	, DWORD param3)
+{
+	g_PcCreateObject_IWzPackage(param1, param2, param3);
+
+	int screen_refresh_rate = 0;
+	memcpy((void*)&screen_refresh_rate, (void*)0x00BF14EC, sizeof(int));
+	if (screen_refresh_rate != 0)
+	{
+		unsigned char* p = (unsigned char*)screen_refresh_rate;
+		p[0x84] = 0x3C;
+	}
+}
+void Client::RefreshRate()
+{
+	//屏幕刷新率大于60客户端无法启动
+
+	g_PcCreateObject_IWzPackage = (pfunPcCreateObject_IWzPackage)0x009FB0E9;
+	DetourTransactionBegin();
+	DetourUpdateThread(GetCurrentThread());
+	DetourAttach((LPVOID*)&g_PcCreateObject_IWzPackage, HookPcCreateObject_IWzPackage);
+	DetourTransactionCommit();
+}

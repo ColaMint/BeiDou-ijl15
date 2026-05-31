@@ -7,6 +7,7 @@
 #include <comutil.h>
 #include "BossHP.h"
 #include "HpMpAlert.h"
+#pragma comment(lib, "ws2_32.lib")
 
 void CreateConsole() {
 	AllocConsole();
@@ -76,6 +77,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		HookCWvsApp__InitializeResMan(false); //experimental //ty to all the contributors of the ragezone release: Client load .img instead of .wz v62~v92
 		Hook_StringPool__GetString(true); //hook stringpool modification //ty !! popcorn //ty darter
 		Hook_lpfn_NextLevel(true);
+		HookSaveGlobal(true);
+		HookHpMpAlertRecv(true);
+		Hook_lpfn_NextLevel(true);
 		Hook_lpfn_NextLevel(true);
 		HookSaveGlobal(true);
 		HookHpMpAlertRecv(true);
@@ -99,6 +103,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		Client::MoreHook();
 		BossHP::Hook();
 		Client::WorldMap();
+		Client::RefreshRate();
 		//Client::FullScreenPetLooting();
 		Client::CloseRangeShooting();
 		Client::DropCashItem();
