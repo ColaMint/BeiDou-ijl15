@@ -59,4 +59,6 @@ public:
 	static bool fixWine;
 	static bool nonStopAttack;
 	static bool instantTextDisplay;
+	static int auctionMinPrice;
+	static int auctionMaxPrice;
 };

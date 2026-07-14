@@ -37,6 +37,9 @@ bool Client::fixWine = false; // –ﬁ∏¥‘⁄wine÷–‘À–– ±—°Ω«…´…¡ÕÀµƒŒ Ã‚£®∏±◊˜”√ «∑˛Œ
 bool Client::nonStopAttack = false; // π•ª˜≤ªÕ£
 bool Client::instantTextDisplay = false; // ∂‘ª∞øÚŒƒ◊÷ÀŸœ‘
 
+int Client::auctionMinPrice = 110;
+int Client::auctionMaxPrice = 9999999;
+
 void Client::UpdateGameStartup() {
 	//Memory::CodeCave(cc0x0044E550, dw0x0044E550, dw0x0044E550Nops); //run from packed client //skip //sub_44E546
 	//Memory::CodeCave(cc0x0044E5BE, dw0x0044E5BE, dw0x0044E5BENops); //run from packed client //skip
@@ -165,6 +168,18 @@ void Client::UpdateGameStartup() {
 	Memory::WriteInt(0x00780743 + 3, speedMovementCap); //set speed cap //ty ronan
 	Memory::WriteInt(0x008C4286 + 1, speedMovementCap); //set speed cap //ty ronan
 	Memory::WriteInt(0x0094D91E + 1, speedMovementCap); //set speed cap //ty ronan
+	// Auction price limits (v83 CRegisterAuctionEntryDlg::Confirm @ 0x005AD76B)
+	// Floor uses cmp reg,imm8 (sign-extended); keep configured min in 1..128 -> imm8 in 0..127
+	int auctionFloorImm8 = auctionMinPrice - 1;
+	if (auctionFloorImm8 < 0) auctionFloorImm8 = 0;
+	if (auctionFloorImm8 > 127) auctionFloorImm8 = 127;
+	Memory::WriteByte(0x005AD8BD, (unsigned char)auctionFloorImm8); // starting-bid floor imm8
+	Memory::WriteByte(0x005AD8C8, (unsigned char)auctionFloorImm8); // buyout floor imm8
+	// Ceiling: single mov ecx,imm32 feeds both starting-bid and buyout upper compares
+	Memory::WriteInt(0x005AD8B3, (unsigned int)auctionMaxPrice);
+	// Sale (direct sell) mode: CITC::OnRegisterSaleEntry @ 0x0059EC36 (branch a2==0)
+	Memory::WriteByte(0x0059ED8A, (unsigned char)auctionFloorImm8); // price floor imm8
+	Memory::WriteInt(0x0059ED81, (unsigned int)auctionMaxPrice);    // price ceiling imm32
 
 	//“‘œ¬”≈ªØ◊÷∑˚¥Æœ‘ æ
 	Memory::PatchNop(0x008E4252, 2);	//–ﬁ∏¥µ¿æﬂΩÈ…‹÷–£¨÷–Œƒªª––µƒŒ Ã‚

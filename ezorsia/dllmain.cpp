@@ -61,6 +61,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			Client::freeSPAllocation = reader.GetBoolean("optional", "freeSPAllocation", false);
 			Client::nonStopAttack = reader.GetBoolean("optional", "nonStopAttack", false);
 			Client::instantTextDisplay = reader.GetBoolean("optional", "instantTextDisplay", false);
+			Client::auctionMinPrice = reader.GetInteger("optional", "auctionMinPrice", 110);
+			Client::auctionMaxPrice = reader.GetInteger("optional", "auctionMaxPrice", 9999999);
 		}
 
 		Hook_CreateMutexA(true); //multiclient //ty darter, angel, and alias!
