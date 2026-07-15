@@ -39,6 +39,7 @@ bool Client::instantTextDisplay = false; // 对话框文字速显
 
 int Client::auctionMinPrice = 110;
 int Client::auctionMaxPrice = 9999999;
+bool Client::auctionTaxFree = false; // auction: hide tax, show untaxed nPrice
 
 void Client::UpdateGameStartup() {
 	//Memory::CodeCave(cc0x0044E550, dw0x0044E550, dw0x0044E550Nops); //run from packed client //skip //sub_44E546
@@ -180,6 +181,20 @@ void Client::UpdateGameStartup() {
 	// Sale (direct sell) mode: CITC::OnRegisterSaleEntry @ 0x0059EC36 (branch a2==0)
 	Memory::WriteByte(0x0059ED8A, (unsigned char)auctionFloorImm8); // price floor imm8
 	Memory::WriteInt(0x0059ED81, (unsigned int)auctionMaxPrice);    // price ceiling imm32
+	// v83 ITCITEM: +0x24=nContractFee(手续费,服务器下发), +0xFC=nPrice(标价).
+	// (修正: 此前误判 +0xFC 为手续费, 实为标价; 改为 patch +0x24.)
+	// patch 第二个 Decode4 块 @ 0x5A2CA9 (13字节): 仍调用 Decode4 推进数据包,
+	// 丢弃结果, 把 nContractFee(+0x24) 存 0 -> 列表显示 = nPrice(卖家标价).
+	if (auctionTaxFree) {
+		static unsigned char aucTaxFreePatch[13] = {
+			0x8B, 0xCE,                   // mov ecx, esi
+			0xE8, 0x79, 0x39, 0xE6, 0xFF, // call Decode4 (call 前移3字节, rel32 重算)
+			0x31, 0xC0,                   // xor eax, eax
+			0x89, 0x47, 0x24,             // mov [edi+0x24], eax  -> nContractFee = 0
+			0x90                          // nop
+		};
+		Memory::WriteByteArray(0x5A2CA9, aucTaxFreePatch, 13);
+	}
 
 	//以下优化字符串显示
 	Memory::PatchNop(0x008E4252, 2);	//修复道具介绍中，中文换行的问题

@@ -61,4 +61,5 @@ public:
 	static bool instantTextDisplay;
 	static int auctionMinPrice;
 	static int auctionMaxPrice;
+	static bool auctionTaxFree;
 };
