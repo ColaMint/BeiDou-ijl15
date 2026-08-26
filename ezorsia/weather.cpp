@@ -2081,11 +2081,10 @@ void CMapLoadable::LoadMap_hook() {
             Lamps_CollectFootholds(m_pPropField, g_vFH);
             BuildFootholdEdges();
         }
-        // Lamps, likewise built by the LoadMap below. This both lights the lamps the
-        // map already places and injects any hand-placed ones; it MUST run before the
-        // engine's LoadMap, because building an object with a direct MakeObj call
-        // afterwards faults.
-        Lamps_Inject(this, bNight);
+        // Town lamp injection is disabled because some town object lists (including
+        // Henesys) crash while the engine loads the modified list. Keep the call here
+        // so the feature can be restored without removing its implementation.
+        // Lamps_Inject(this, bNight);
     } catch (const _com_error& e) {
         (void)e;
         DEBUG_MESSAGE("weather: inject failed 0x%08X", e.Error());
