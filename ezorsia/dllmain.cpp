@@ -7,6 +7,9 @@
 #include <comutil.h>
 #include "BossHP.h"
 #include "HpMpAlert.h"
+#include "PacketDispatcher.h"
+#include "WeatherSystem.h"
+#include "weather.h"
 #pragma comment(lib, "ws2_32.lib")
 
 void CreateConsole() {
@@ -34,6 +37,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			Client::SwitchChinese = reader.GetBoolean("general", "SwitchChinese", false);
 			Memory::UseVirtuProtect = reader.GetBoolean("general", "UseVirtuProtect", true);
 			Client::fixWine = reader.GetBoolean("general", "fixWine", false);
+			g_weatherSystemEnabled = reader.GetBoolean("optional", "weatherSystem", true);
 			Client::setDamageCap = reader.GetReal("optional", "setDamageCap", 199999);
 			Client::setMAtkCap = reader.GetReal("optional", "setMAtkCap", 1999);
 			Client::setAccCap = reader.GetReal("optional", "setAccCap", 999);
@@ -66,6 +70,16 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			Client::auctionTaxFree = reader.GetBoolean("optional", "auctionTaxFree", false);
 		}
 
+		// This bypasses an unsafe adapter-list walk used while entering the game.
+		// Apply it before installing packet and weather detours so no game path can
+		// reach 0x005FCE38 during the longer hook-initialisation window.
+		Client::FixWine();
+		if (Client::fixWine) {
+			// The loop back-edge at 0x005FCECA jumps directly here and bypasses
+			// FixWine's 0x005FCE32 entry patch. This is the faulting dereference.
+			Memory::PatchJump(0x005FCE38, 0x005FCED0);
+		}
+
 		Hook_CreateMutexA(true); //multiclient //ty darter, angel, and alias!
 		HookCreateWindowExA(true); //default ezorsia
 		HookGetModuleFileName(true); //default ezorsia
@@ -81,11 +95,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		Hook_StringPool__GetString(true); //hook stringpool modification //ty !! popcorn //ty darter
 		Hook_lpfn_NextLevel(true);
 		HookSaveGlobal(true);
-		HookHpMpAlertRecv(true);
-		Hook_lpfn_NextLevel(true);
-		Hook_lpfn_NextLevel(true);
-		HookSaveGlobal(true);
-		HookHpMpAlertRecv(true);
+		HookPacketDispatcher(true);
 		//Hook_get_unknown(true);
 		//Hook_get_resource_object(true); //helper function hooks  //ty teto for helping me get started
 		//Hook_com_ptr_t_IWzProperty__ctor(true);
@@ -95,6 +105,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 
 		std::cout << "Applying resolution " << Client::m_nGameWidth << "x" << Client::m_nGameHeight << std::endl;
 		Client::UpdateResolution();
+		if (g_weatherSystemEnabled) {
+			AttachWeatherMod();
+			AttachWeatherWindMod();
+			HookWeatherFrame(true);
+		}
 		Client::FixMouseWheel();
 		Client::Chinese();
 		Client::LongQuickSlot();
@@ -112,7 +127,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		Client::DropCashItem();
 		Client::IgnoreGender();
 		Client::FreeSPAllocation();
-		Client::FixWine();
 		Client::NonStopAttack();
 		Client::InstantTextDisplay();
 		std::cout << "GetModuleFileName hook created" << std::endl;

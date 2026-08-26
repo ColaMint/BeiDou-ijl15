@@ -1,0 +1,49 @@
+[
+    uuid(D15C6042-5770-4007-8608-EBF3A1ED8083),
+    version(1.0)
+]
+library WzLib
+{
+    importlib("stdole2.tlb");
+    import "IWzGr2DLayer_DX9.idl";
+
+    [
+        object,
+        uuid(E576EA33-D465-4F08-AAB1-E78DF73EE6D9)
+    ]
+    interface IWzGr2D_DX9 : IUnknown {
+        HRESULT Initialize([in] UINT uWidth, [in] UINT uHeight, [in, optional] VARIANT vHwnd, [in, optional] VARIANT vBPP, [in, optional] VARIANT vRefreshRate);
+        HRESULT Uninitialize();
+        [propget] HRESULT nextRenderTime([out, retval] INT* pnTime);
+        HRESULT UpdateCurrentTime([in] INT tTime);
+        HRESULT RenderFrame();
+        HRESULT SetFrameSkip();
+        HRESULT ToggleFpsPanel();
+        HRESULT DisableFpsPanel();
+        [propget] HRESULT width([out, retval] UINT* puWidth);
+        [propget] HRESULT height([out, retval] UINT* puHeight);
+        HRESULT screenResolution([in] UINT uWidth, [in] UINT uHeight);
+        [propget] HRESULT bpp([out, retval] UINT* puBPP);
+        [propget] HRESULT refreshRate([out, retval] UINT* puRefreshRate);
+        [propget] HRESULT fps100([out, retval] UINT* puFps100);
+        [propget] HRESULT currentTime([out, retval] INT* pnCurrentTime);
+        [propget] HRESULT fullScreen([out, retval] INT* pnFullScreen);
+        [propput] HRESULT fullScreen([in] INT nFullScreen);
+        [propget] HRESULT backColor([out, retval] UINT* puColor);
+        [propput] HRESULT backColor([in] UINT uColor);
+        [propget] HRESULT redTone([out, retval] IWzVector2D** ppVector);
+        [propget] HRESULT greenBlueTone([out, retval] IWzVector2D** ppVector);
+        [propget] HRESULT center([out, retval] IWzVector2D** ppVector);
+        HRESULT GetSnapshot([in] VARIANT pvBuffer, [in] UINT uBufferSize, [in] INT x, [in] INT y);
+        HRESULT CreateLayer([in] INT nLeft, [in] INT nTop, [in] UINT uWidth, [in] UINT uHeight, [in] INT nZ, [in, optional] VARIANT vCanvas, [in, optional] VARIANT dwFilter, [out, retval] IWzGr2DLayer_DX9** ppLayer);
+        HRESULT AdjustCenter([in] INT nAdjustCenterX, [in] INT nAdjustCenterY);
+        HRESULT TakeScreenShot([in] BSTR sFileName, [in] INT nFileFormat);
+        HRESULT SetVideoMode([in] INT bMode);
+        HRESULT SetVideoPath([in] BSTR sPath, [in] INT unk1, [in] INT unk2);
+        HRESULT PlayVideo();
+        HRESULT PauseVideo([in] INT nPause);
+        HRESULT StopVideo();
+        [propget] HRESULT videoStatus([out, retval] INT* pnStatus);
+        [propput] HRESULT videoVolume([in] INT nVolume);
+    };
+};

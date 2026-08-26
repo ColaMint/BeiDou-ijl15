@@ -34,6 +34,12 @@
     <Filter Include="Source Files\innerH">
       <UniqueIdentifier>{284a1d4a-e325-4e87-9869-4c958dc42975}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Weather">
+      <UniqueIdentifier>{6D2E5F8C-408A-4D2B-A1A2-B04D9A05EAA1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Weather">
+      <UniqueIdentifier>{B1983FCB-D1AB-4AAB-893E-C1312DF3B1C7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dllmain.h">
@@ -150,6 +156,15 @@
     <ClInclude Include="HpMpAlert.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PacketDispatcher.h"><Filter>Header Files\Weather</Filter></ClInclude>
+    <ClInclude Include="WeatherSystem.h"><Filter>Header Files\Weather</Filter></ClInclude>
+    <ClInclude Include="debug.h"><Filter>Header Files\Weather</Filter></ClInclude>
+    <ClInclude Include="hook.h"><Filter>Header Files\Weather</Filter></ClInclude>
+    <ClInclude Include="lamps.h"><Filter>Header Files\Weather</Filter></ClInclude>
+    <ClInclude Include="patch_common.h"><Filter>Header Files\Weather</Filter></ClInclude>
+    <ClInclude Include="weather.h"><Filter>Header Files\Weather</Filter></ClInclude>
+    <ClInclude Include="weathercanvas.h"><Filter>Header Files\Weather</Filter></ClInclude>
+    <ClInclude Include="weatherfx.h"><Filter>Header Files\Weather</Filter></ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -179,6 +194,19 @@
     <ClCompile Include="HpMpAlert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PacketDispatcher.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="WeatherSystem.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="lamps.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="weather.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="weatheraccum.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="weathercanvas.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="weatherfx.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="weathermove.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="weatherpuddle.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="weathersound.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="weathersplash.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="weathersway.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="weatherwind.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ezorsia.rc">

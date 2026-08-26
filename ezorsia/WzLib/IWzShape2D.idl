@@ -1,0 +1,33 @@
+[
+    uuid(D15C6042-5770-4007-8608-EBF3A1ED8083),
+    version(1.0)
+]
+library WzLib
+{
+    importlib("stdole2.tlb");
+    import "IWzSerialize.idl";
+
+    [
+        object,
+        uuid(4CFB57C7-E3EA-B340-AC98-4B2750E3642A)
+    ]
+    interface IWzShape2D : IWzSerialize {
+        [propget] HRESULT item([in, optional] VARIANT vIndex, [out, retval] VARIANT* pvValue);
+        [propget] HRESULT _NewEnum([out, retval] IUnknown** pVal);
+        [propget] HRESULT count([out, retval] UINT* pVal);
+        [propget] HRESULT x([out, retval] INT* pVal);
+        [propput] HRESULT x([in] INT newVal);
+        [propget] HRESULT y([out, retval] INT* pVal);
+        [propput] HRESULT y([in] INT newVal);
+        [propget] HRESULT x2([out, retval] INT* pVal);
+        [propput] HRESULT x2([in] INT newVal);
+        [propget] HRESULT y2([out, retval] INT* pVal);
+        [propput] HRESULT y2([in] INT newVal);
+        HRESULT Move([in] INT nX, [in] INT nY);
+        HRESULT Offset([in] INT nDX, [in] INT nDY);
+        HRESULT Scale([in] INT nXMul, [in] INT nXDiv, [in] INT nYMul, [in] INT nYDiv, [in] INT nXOrg, [in] INT nYOrg);
+        HRESULT Insert([in] VARIANT vIndexOrShape, [in, optional] VARIANT vShape);
+        HRESULT Remove([in] VARIANT vIndex, [out, retval] VARIANT* pvRemoved);
+        HRESULT Init([in] INT nX, [in] INT nY);
+    };
+};
