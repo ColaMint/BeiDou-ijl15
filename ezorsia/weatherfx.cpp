@@ -506,7 +506,12 @@ void RefreshTargets() {
         g_nNativeOn = nWant;
     }
 
-    WeatherSound_SetWanted(g_bActive ? p.uSound : (unsigned char)Weather::SND_NONE);
+    // Wind ambience is disabled together with scenery sway. Keep the original request
+    // beside the filtered one so both effects can be restored without removing code.
+    // WeatherSound_SetWanted(g_bActive ? p.uSound : (unsigned char)Weather::SND_NONE);
+    WeatherSound_SetWanted(g_bActive && p.uSound != Weather::SND_WIND
+        ? p.uSound
+        : (unsigned char)Weather::SND_NONE);
 }
 
 }  // namespace
