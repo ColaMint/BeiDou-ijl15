@@ -704,7 +704,7 @@ void WeatherFx::Inject(CMapLoadable* pField) {
 }
 
 unsigned int WeatherFx::InjectedLastIndex() {
-    return g_bHaveBase ? (g_nFogBase + FX_FOG_COUNT - 1) : 0;
+    return g_bHaveBase ? (g_nSnowBase + FX_SNOW_COUNT - 1) : 0;
 }
 
 void WeatherFx::SetSky(unsigned char uSky, bool bSnap) {
@@ -833,6 +833,7 @@ void WeatherFx::OnEnterField(bool bSkyField) {
     g_fRainLevel  = g_fRainTarget;
     g_fRainbowLevel = g_fRainbowTarget;
     g_fDustLevel = g_fDustTarget;
+    g_fFogLevel = g_fFogTarget;
     g_fSnowLevel = g_fSnowTarget;
     Reapply();
 }

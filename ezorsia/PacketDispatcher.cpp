@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "PacketDispatcher.h"
 #include "HpMpAlert.h"
+#include "WeatherSystem.h"
 #include "weather.h"
 #include "lamps.h"
 #include "wvs/packet.h"
@@ -34,10 +35,14 @@ void __fastcall ProcessPacketHook(void* self, void*, CInPacket* packet) {
         HandleHpMpAlertPacket(packet);
         return;
     case kWeatherSyncOpcode:
-        Weather_HandleWorldState(packet);
+        if (g_weatherSystemEnabled) {
+            Weather_HandleWorldState(packet);
+        }
         return;
     case kLampPreviewOpcode:
-        Lamp_HandlePreviewPacket(packet);
+        if (g_weatherSystemEnabled) {
+            Lamp_HandlePreviewPacket(packet);
+        }
         return;
     default:
         break;
@@ -47,7 +52,9 @@ void __fastcall ProcessPacketHook(void* self, void*, CInPacket* packet) {
         return;
     }
     if (opcode == kSetFieldOpcode) {
-        Weather_ExpectGameplayLoad();
+        if (g_weatherSystemEnabled) {
+            Weather_ExpectGameplayLoad();
+        }
         g_processPacket(self, packet);
         return;
     }

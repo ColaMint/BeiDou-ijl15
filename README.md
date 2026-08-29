@@ -98,7 +98,7 @@ DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 
 
 植被、树木、绳索和吊挂物摇摆的实现仍保留在代码中，但当前三个启用调用点已注释，因此本版本不会显示摇摆效果。
 
-`weatherSystem=false` 只关闭客户端天气、昼夜、地面效果、环境音和路灯显示。天气同步封包仍会正常接收和解析，不影响网络协议。
+`weatherSystem=false` 会关闭整个客户端天气系统：不安装天气、昼夜、地面效果、环境音和路灯相关 hook，收到 `WEATHER_SYNC` / `LAMP_PREVIEW` 也会直接丢弃，不更新客户端天气状态。
 
 ### 服务端依赖
 
@@ -152,7 +152,7 @@ DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 
 | `instantTextDisplay` | 对话文字立即显示 |
 | `auctionMinPrice` / `auctionMaxPrice` | 拍卖行价格范围 |
 | `auctionTaxFree` | 拍卖行显示卖家未税标价 |
-| `weatherSystem` | 天气和昼夜视觉总开关，不关闭封包同步 |
+| `weatherSystem` | 天气系统总开关；关闭时不注入天气/昼夜逻辑，也不处理天气同步封包 |
 
 ### debug
 
