@@ -801,6 +801,13 @@ static int CurrentFieldID() {
     return reinterpret_cast<GetCurFieldID_t>(0x00A1238B)(nullptr);
 }
 
+// Login and other non-gameplay stages can still flow through CMapLoadable on this client,
+// and at least one login background reports field id 0. Weather state belongs only to
+// real maps; a zero or negative id must never be injected, captured or tinted.
+static bool IsGameplayFieldId(int nFieldId) {
+    return nFieldId > 0;
+}
+
 // Maps excluded by hand, whatever their background says. Sorted, binary searched.
 //
 // The (bank, index) rule below is right for the overwhelming majority of maps, but it
@@ -871,9 +878,13 @@ static bool FieldHasSky(CMapLoadable* pField) {
     if (!pField) {
         return false;
     }
+    const int nFieldId = CurrentFieldID();
+    if (!IsGameplayFieldId(nFieldId)) {
+        return false;
+    }
     // Checked FIRST and by id, so an excluded map costs one binary search and never
     // touches the property tree at all.
-    if (IsExcludedMap(CurrentFieldID())) {
+    if (IsExcludedMap(nFieldId)) {
         return false;
     }
     try {
@@ -2041,12 +2052,25 @@ void Weather_Tick() {
 }
 
 void CMapLoadable::LoadMap_hook() {
+    if (g_pOwningField && static_cast<void*>(get_field()) != g_pOwningField) {
+        ReleaseField();
+        DEBUG_MESSAGE("weather: previous field released before non-owning LoadMap");
+    }
+
     // This client also loads the login background through CMapLoadable. The weather
     // package assumes this function belongs only to CField and touches field-owned WZ
     // state around the original call. Limit that work to a load preceded by SET_FIELD;
     // the one-shot flag remains armed if ProcessPacket schedules the load asynchronously.
     if (!g_bExpectedGameplayLoad.exchange(false)) {
         CMapLoadable::LoadMap(this);
+        return;
+    }
+
+    const int nFieldId = CurrentFieldID();
+    if (!IsGameplayFieldId(nFieldId)) {
+        ReleaseField();
+        CMapLoadable::LoadMap(this);
+        DEBUG_MESSAGE("weather: ignored non-gameplay LoadMap field=%d", nFieldId);
         return;
     }
 
@@ -2070,7 +2094,7 @@ void CMapLoadable::LoadMap_hook() {
         // same answer everywhere except under the sea, which has the second without the
         // first. See IsUnderwaterMap.
         g_bFxBand = bSky;
-        bNight = bSky || IsUnderwaterMap(CurrentFieldID());
+        bNight = bSky || IsUnderwaterMap(nFieldId);
         // Before LoadMap, because MakeObj runs inside it and every object tests itself
         // against this list as it is built. The property tree is already fully populated
         // at this point, which is the same fact Lamps_Inject relies on to stand a lamp

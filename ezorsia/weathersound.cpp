@@ -91,6 +91,7 @@ void Start(unsigned char uAmbience) {
     try {
         uId = reinterpret_cast<PlaySE_t>(ADDR_PLAYSE)(p, sUol, RAIN_VOLUME, 1);
     } catch (const _com_error& e) {
+        (void)e;
         g_uFailedMask |= (1u << uAmbience);
         LOG_ONCE("weathersound: PlaySE(%ls) threw hr=0x%08X; that ambience will be silent",
                  sUol, (unsigned int)e.Error());

@@ -671,6 +671,7 @@ void WeatherFx::Inject(CMapLoadable* pField) {
         AddBack(pBack, uIdx++, L"WeatherSnow", g_aSnow[i], i == 0 ? 0L : 1L);
     }
     } catch (const _com_error& e) {
+        (void)e;
         bThrew = true;
         LOG_ONCE("weatherfx: inject threw hr=0x%08X after %u of %u entries",
                  (unsigned int)e.Error(), uIdx - uBase, uTotal);
