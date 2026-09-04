@@ -10,6 +10,7 @@
 #include "PacketDispatcher.h"
 #include "WeatherSystem.h"
 #include "weather.h"
+#include "d3d8to9.h"
 #pragma comment(lib, "ws2_32.lib")
 
 void CreateConsole() {
@@ -129,6 +130,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		Client::FreeSPAllocation();
 		Client::NonStopAttack();
 		Client::InstantTextDisplay();
+		ApplyD3D8To9Patch();
 		std::cout << "GetModuleFileName hook created" << std::endl;
 		ijl15::CreateHook(); //NMCO::CreateHook();
 		std::cout << "NMCO hook initialized" << std::endl;
