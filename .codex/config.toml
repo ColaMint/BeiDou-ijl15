@@ -1,0 +1,3 @@
+[mcp_servers.ida]
+command = "ida-mcp"
+args = ["serve"]
