@@ -195,6 +195,7 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$(Proje
     <ClInclude Include="PacketDispatcher.h" />
     <ClInclude Include="WeatherSystem.h" />
     <ClInclude Include="d3d8to9.h" />
+    <ClInclude Include="ExceptionLogger.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="hook.h" />
     <ClInclude Include="lamps.h" />
@@ -246,6 +247,7 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$(Proje
     <ClCompile Include="PacketDispatcher.cpp" />
     <ClCompile Include="WeatherSystem.cpp" />
     <ClCompile Include="d3d8to9.cpp" />
+    <ClCompile Include="ExceptionLogger.cpp" />
     <ClCompile Include="lamps.cpp" />
     <ClCompile Include="weather.cpp" />
     <ClCompile Include="weatheraccum.cpp" />

@@ -157,6 +157,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PacketDispatcher.h"><Filter>Header Files\Weather</Filter></ClInclude>
+    <ClInclude Include="ExceptionLogger.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="WeatherSystem.h"><Filter>Header Files\Weather</Filter></ClInclude>
     <ClInclude Include="d3d8to9.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="debug.h"><Filter>Header Files\Weather</Filter></ClInclude>
@@ -196,6 +197,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PacketDispatcher.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
+    <ClCompile Include="ExceptionLogger.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="WeatherSystem.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
     <ClCompile Include="d3d8to9.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="lamps.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
