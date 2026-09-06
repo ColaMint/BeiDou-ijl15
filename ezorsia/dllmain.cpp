@@ -14,6 +14,7 @@
 #include "ExceptionLogger.h"
 #include "ResManCacheHook.h"
 #include "NameSpaceStreamingHook.h"
+#include "MapleTVMediaHook.h"
 #include "Logger.h"
 #pragma comment(lib, "ws2_32.lib")
 
@@ -36,6 +37,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		int resManRetainTimeMs = 60000;
 		int resManNameSpaceCacheTimeMs = 60000;
 		bool nameSpaceStreaming = true;
+		bool fixRefreshRate = false;
+		bool disableMapleTVMedia = true;
 		if (reader.ParseError() == 0) {
 			Client::m_nGameWidth = reader.GetInteger("general", "width", 1280);
 			Client::m_nGameHeight = reader.GetInteger("general", "height", 720);
@@ -47,7 +50,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			Client::SwitchChinese = reader.GetBoolean("general", "SwitchChinese", false);
 			Memory::UseVirtuProtect = reader.GetBoolean("general", "UseVirtuProtect", true);
 			Client::fixWine = reader.GetBoolean("general", "fixWine", false);
-			g_weatherSystemEnabled = reader.GetBoolean("optional", "weatherSystem", true);
+			g_weatherSystemEnabled = reader.GetBoolean("optional", "weatherSystem", false);
 			Client::setDamageCap = reader.GetReal("optional", "setDamageCap", 199999);
 			Client::setMAtkCap = reader.GetReal("optional", "setMAtkCap", 1999);
 			Client::setAccCap = reader.GetReal("optional", "setAccCap", 999);
@@ -63,6 +66,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			resManNameSpaceCacheTimeMs = reader.GetInteger(
 				"general", "resManNameSpaceCacheTimeMs", 60000);
 			nameSpaceStreaming = reader.GetBoolean("general", "nameSpaceStreaming", true);
+			fixRefreshRate = reader.GetBoolean("general", "fixRefreshRate", false);
+			disableMapleTVMedia = reader.GetBoolean(
+				"general", "disableMapleTVMedia", true);
 			Client::imeType = reader.GetInteger("general", "imeType", 1);
 			ownLoginFrame = reader.GetBoolean("optional", "ownLoginFrame", false);
 			ownCashShopFrame = reader.GetBoolean("optional", "ownCashShopFrame", false);
@@ -107,6 +113,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		HookIWzFileSystem__Init(true);
 		HookIWzNameSpace__Mount(true);
 		HookNameSpaceStreaming(nameSpaceStreaming);
+		HookMapleTVMedia(disableMapleTVMedia);
 		HookResManCache(
 			resManCacheExpiry, resManRetainTimeMs, resManNameSpaceCacheTimeMs);
 		Hook_StringPool__GetString(true); //hook stringpool modification //ty !! popcorn //ty darter
@@ -139,7 +146,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		Client::MoreHook();
 		BossHP::Hook();
 		Client::WorldMap();
-		Client::RefreshRate();
+		if (fixRefreshRate) {
+			Client::RefreshRate();
+		}
 		//Client::FullScreenPetLooting();
 		Client::CloseRangeShooting();
 		Client::DropCashItem();

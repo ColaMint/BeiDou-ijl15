@@ -155,11 +155,13 @@ DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 
 | `instantTextDisplay` | 对话文字立即显示 |
 | `auctionMinPrice` / `auctionMaxPrice` | 拍卖行价格范围 |
 | `auctionTaxFree` | 拍卖行显示卖家未税标价 |
-| `weatherSystem` | 天气系统总开关；关闭时不注入天气/昼夜逻辑，也不处理天气同步封包 |
+| `weatherSystem` | 天气系统总开关；关闭时不注入天气/昼夜逻辑，也不处理天气同步封包，默认关闭 |
 | `resManCacheExpiry` | 将 ResMan 的无限缓存改为有限时间，默认开启 |
 | `resManRetainTimeMs` | 序列化对象缓存保留时间，默认 60000 毫秒 |
 | `resManNameSpaceCacheTimeMs` | namespace/reparse 缓存保留时间，默认 60000 毫秒 |
 | `nameSpaceStreaming` | 禁止 NameSpace.dll 整文件映射 WZ，改用其内置流式读取回退路径，默认开启 |
+| `fixRefreshRate` | 修复高刷新率显示器启动失败，默认关闭 |
+| `disableMapleTVMedia` | 禁用 MapleTV 的 SWF 下载和渲染，默认开启 |
 
 ### debug
 
@@ -212,6 +214,15 @@ nameSpaceStreaming=true
 
 ResMan 初始化后的 `Memory snapshot` 中，`mapped` 应当由约 1076 MiB 降到接近初始化前
 水平。设置 `nameSpaceStreaming=false` 可恢复 `NameSpace.dll` 原来的整文件映射行为。
+
+### 禁用 MapleTV 媒体
+
+`GR2D_DX8.dll` 使用 `WzFlashRenderer.dll` 播放主城 MapleTV 大屏的 SWF 媒体，客户端的
+`CMapleTVMan` 会通过 FTP 把媒体列表和 `*.swf` 下载到用户目录下的
+`Nexon\\MapleStory\\MapleTV`。默认启用 `disableMapleTVMedia` 后，插件会让 MapleTV 的
+FTP 连接入口按客户端原有的失败路径结束，因此不会下载媒体列表或 SWF；同时屏蔽
+`RenderFlash`，避免没有媒体对象时在 `WzFlashRenderer.dll+0x1298` 重复触发访问异常。
+下载入口会校验已知 v83 客户端的代码，不匹配的客户端版本不会被修改。
 
 ## 推荐服务端
 

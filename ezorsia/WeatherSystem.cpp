@@ -2,7 +2,7 @@
 #include "WeatherSystem.h"
 #include "weather.h"
 
-bool g_weatherSystemEnabled = true;
+bool g_weatherSystemEnabled = false;
 
 extern void Weather_Tick();
 extern void WeatherPuddle_Frame();
