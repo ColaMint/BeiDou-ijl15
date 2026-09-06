@@ -13,6 +13,7 @@
 #include "d3d8to9.h"
 #include "ExceptionLogger.h"
 #include "ResManCacheHook.h"
+#include "NameSpaceStreamingHook.h"
 #include "Logger.h"
 #pragma comment(lib, "ws2_32.lib")
 
@@ -34,6 +35,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		bool resManCacheExpiry = true;
 		int resManRetainTimeMs = 60000;
 		int resManNameSpaceCacheTimeMs = 60000;
+		bool nameSpaceStreaming = true;
 		if (reader.ParseError() == 0) {
 			Client::m_nGameWidth = reader.GetInteger("general", "width", 1280);
 			Client::m_nGameHeight = reader.GetInteger("general", "height", 720);
@@ -56,10 +58,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			Client::jumpCap = reader.GetInteger("optional", "jumpCap", 123);
 			Client::debug = reader.GetBoolean("debug", "debug", false);
 			Client::noPassword = reader.GetBoolean("debug", "noPassword", false);
-			resManCacheExpiry = reader.GetBoolean("debug", "resManCacheExpiry", true);
-			resManRetainTimeMs = reader.GetInteger("debug", "resManRetainTimeMs", 60000);
+			resManCacheExpiry = reader.GetBoolean("general", "resManCacheExpiry", true);
+			resManRetainTimeMs = reader.GetInteger("general", "resManRetainTimeMs", 60000);
 			resManNameSpaceCacheTimeMs = reader.GetInteger(
-				"debug", "resManNameSpaceCacheTimeMs", 60000);
+				"general", "resManNameSpaceCacheTimeMs", 60000);
+			nameSpaceStreaming = reader.GetBoolean("general", "nameSpaceStreaming", true);
 			Client::imeType = reader.GetInteger("general", "imeType", 1);
 			ownLoginFrame = reader.GetBoolean("optional", "ownLoginFrame", false);
 			ownCashShopFrame = reader.GetBoolean("optional", "ownCashShopFrame", false);
@@ -103,6 +106,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		Hookbstr_ctor(true);
 		HookIWzFileSystem__Init(true);
 		HookIWzNameSpace__Mount(true);
+		HookNameSpaceStreaming(nameSpaceStreaming);
 		HookResManCache(
 			resManCacheExpiry, resManRetainTimeMs, resManNameSpaceCacheTimeMs);
 		Hook_StringPool__GetString(true); //hook stringpool modification //ty !! popcorn //ty darter

@@ -156,6 +156,10 @@ DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 
 | `auctionMinPrice` / `auctionMaxPrice` | 拍卖行价格范围 |
 | `auctionTaxFree` | 拍卖行显示卖家未税标价 |
 | `weatherSystem` | 天气系统总开关；关闭时不注入天气/昼夜逻辑，也不处理天气同步封包 |
+| `resManCacheExpiry` | 将 ResMan 的无限缓存改为有限时间，默认开启 |
+| `resManRetainTimeMs` | 序列化对象缓存保留时间，默认 60000 毫秒 |
+| `resManNameSpaceCacheTimeMs` | namespace/reparse 缓存保留时间，默认 60000 毫秒 |
+| `nameSpaceStreaming` | 禁止 NameSpace.dll 整文件映射 WZ，改用其内置流式读取回退路径，默认开启 |
 
 ### debug
 
@@ -163,9 +167,6 @@ DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 
 | --- | --- |
 | `debug` | 启用客户端调试类功能 |
 | `noPassword` | 解除客户端密码限制，需要同时开启 `debug` |
-| `resManCacheExpiry` | 将 ResMan 的无限缓存改为有限时间，供内存增长测试 |
-| `resManRetainTimeMs` | 序列化对象缓存保留时间，默认 60000 毫秒 |
-| `resManNameSpaceCacheTimeMs` | namespace/reparse 缓存保留时间，默认 60000 毫秒 |
 
 ### ResMan 缓存测试
 
@@ -190,6 +191,27 @@ resManNameSpaceCacheTimeMs=60000
 `GetObject` 请求中检查并淘汰。释放后的内存也可能继续保留在进程 heap 中，因此应观察
 长时间运行时内存是否趋于稳定，不能只以任务管理器中的工作集是否立即下降来判断效果。
 设置 `resManCacheExpiry=false` 可恢复客户端原有的无限保留参数。
+
+### NameSpace 流式读取测试
+
+`NameSpace.dll` 默认会尝试使用 `MapViewOfFile` 将整个 WZ 映射到进程虚拟地址空间。
+开启 `nameSpaceStreaming` 后，插件只拒绝该 DLL 发出的零长度整文件映射请求，使其进入
+原有的文件流读取回退路径；其他 DLL 的映射和显式指定长度的映射不受影响。即使
+`config.ini` 不存在或没有该配置项，也默认启用：
+
+```ini
+nameSpaceStreaming=true
+```
+
+启动后可在 `ijl15.log` 中确认 Hook 和回退次数：
+
+```text
+[NameSpaceStreaming] hook=OK mode=whole-file-map-fallback
+[NameSpaceStreaming] fallback #1 caller=NameSpace.dll+0x........ mapping=0x........ offset=0x0000000000000000
+```
+
+ResMan 初始化后的 `Memory snapshot` 中，`mapped` 应当由约 1076 MiB 降到接近初始化前
+水平。设置 `nameSpaceStreaming=false` 可恢复 `NameSpace.dll` 原来的整文件映射行为。
 
 ## 推荐服务端
 

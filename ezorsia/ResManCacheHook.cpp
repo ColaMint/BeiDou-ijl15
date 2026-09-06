@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ResManCacheHook.h"
 #include "Logger.h"
+#include "ProcessDiagnostics.h"
 
 namespace {
 constexpr DWORD kInitializeResManAddress = 0x009F7159;
@@ -18,10 +19,17 @@ int g_nameSpaceCacheTimeMs = 60000;
 bool g_hookInstalled = false;
 
 void AppendResult(HRESULT result, void* resMan) {
+    HANDLE file = Logger::Open();
+    if (file == INVALID_HANDLE_VALUE) {
+        return;
+    }
     Logger::WriteFormat(
+        file,
         "[ResManCache] object=0x%08lX param=0x%02X retain=%d ms namespace=%d ms HRESULT=0x%08lX\r\n",
         static_cast<DWORD>(reinterpret_cast<uintptr_t>(resMan)), kResManParam,
         g_retainTimeMs, g_nameSpaceCacheTimeMs, static_cast<DWORD>(result));
+    ProcessDiagnostics::WriteMemorySnapshot(file, "after ResMan initialization");
+    Logger::FlushAndClose(file);
 }
 
 void __fastcall InitializeResManHook(void* self, void* edx) {

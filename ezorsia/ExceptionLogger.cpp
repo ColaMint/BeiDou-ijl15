@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ExceptionLogger.h"
 #include "Logger.h"
+#include "ProcessDiagnostics.h"
 
 #include <dbghelp.h>
 
@@ -279,7 +280,8 @@ void WriteStackTrace(HANDLE file, EXCEPTION_POINTERS* exceptionInfo) {
 #endif
 }
 
-void WriteExceptionLog(EXCEPTION_POINTERS* exceptionInfo, const char* source, LONG sequence) {
+void WriteExceptionLog(EXCEPTION_POINTERS* exceptionInfo, const char* source, LONG sequence,
+                       DWORD threadLastError) {
     HANDLE file = Logger::Open();
     if (file == INVALID_HANDLE_VALUE) {
         return;
@@ -293,6 +295,8 @@ void WriteExceptionLog(EXCEPTION_POINTERS* exceptionInfo, const char* source, LO
         time.wSecond, time.wMilliseconds, GetCurrentProcessId(), GetCurrentThreadId());
     WriteFormat(file, "Source: %s\r\n", source);
     WriteFormat(file, "ExceptionID: %ld\r\n", sequence);
+    WriteFormat(file, "Thread LastError at dispatch: %lu (0x%08lX)\r\n",
+                threadLastError, threadLastError);
 
     if (!exceptionInfo || !exceptionInfo->ExceptionRecord) {
         WriteText(file, "Exception information is unavailable.\r\n");
@@ -304,6 +308,8 @@ void WriteExceptionLog(EXCEPTION_POINTERS* exceptionInfo, const char* source, LO
     WriteFormat(file, "Exception: 0x%08lX (%s)\r\n", record->ExceptionCode,
                 ExceptionName(record->ExceptionCode));
     WriteFormat(file, "Fault address: 0x%08p\r\n", record->ExceptionAddress);
+    ProcessDiagnostics::WriteAddressDetails(file, "Fault instruction", record->ExceptionAddress);
+    ProcessDiagnostics::WriteMemorySnapshot(file, "exception");
     WriteCppExceptionDetails(file, record);
 
     if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && record->NumberParameters >= 2) {
@@ -311,6 +317,9 @@ void WriteExceptionLog(EXCEPTION_POINTERS* exceptionInfo, const char* source, LO
             (record->ExceptionInformation[0] == 1 ? "write" : "execute");
         WriteFormat(file, "Access violation: %s address 0x%08lX\r\n", operation,
                     static_cast<DWORD>(record->ExceptionInformation[1]));
+        ProcessDiagnostics::WriteAddressDetails(
+            file, "Access target",
+            reinterpret_cast<const void*>(record->ExceptionInformation[1]));
     }
 
 #if defined(_M_IX86)
@@ -351,6 +360,7 @@ bool IsHardException(DWORD code) {
 }
 
 LONG CALLBACK VectoredExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
+    const DWORD threadLastError = GetLastError();
     if (!exceptionInfo || !exceptionInfo->ExceptionRecord ||
         !IsHardException(exceptionInfo->ExceptionRecord->ExceptionCode)) {
         return EXCEPTION_CONTINUE_SEARCH;
@@ -358,7 +368,8 @@ LONG CALLBACK VectoredExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
 
     if (InterlockedCompareExchange(&g_handlingException, 1, 0) == 0) {
         const LONG sequence = InterlockedIncrement(&g_exceptionSequence);
-        WriteExceptionLog(exceptionInfo, "vectored first-chance exception", sequence);
+        WriteExceptionLog(
+            exceptionInfo, "vectored first-chance exception", sequence, threadLastError);
         g_lastVehExceptionRecord = exceptionInfo->ExceptionRecord;
         g_lastVehThreadId = GetCurrentThreadId();
         g_lastVehExceptionCode = exceptionInfo->ExceptionRecord->ExceptionCode;
@@ -371,6 +382,7 @@ LONG CALLBACK VectoredExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
 }
 
 LONG WINAPI ExceptionFilterHook(EXCEPTION_POINTERS* exceptionInfo) {
+    const DWORD threadLastError = GetLastError();
     const bool alreadyLoggedByVeh = exceptionInfo && exceptionInfo->ExceptionRecord &&
         g_lastVehExceptionRecord == exceptionInfo->ExceptionRecord &&
         g_lastVehThreadId == GetCurrentThreadId() &&
@@ -378,7 +390,8 @@ LONG WINAPI ExceptionFilterHook(EXCEPTION_POINTERS* exceptionInfo) {
         g_lastVehExceptionAddress == exceptionInfo->ExceptionRecord->ExceptionAddress;
     if (!alreadyLoggedByVeh && InterlockedCompareExchange(&g_handlingException, 1, 0) == 0) {
         const LONG sequence = InterlockedIncrement(&g_exceptionSequence);
-        WriteExceptionLog(exceptionInfo, "top-level unhandled exception", sequence);
+        WriteExceptionLog(
+            exceptionInfo, "top-level unhandled exception", sequence, threadLastError);
         g_lastExceptionSequence = sequence;
         g_lastVehThreadId = GetCurrentThreadId();
         g_lastExceptionTick = GetTickCount();

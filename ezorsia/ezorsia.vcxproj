@@ -197,6 +197,7 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$(Proje
     <ClInclude Include="d3d8to9.h" />
     <ClInclude Include="ExceptionLogger.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="ProcessDiagnostics.h" />
     <ClInclude Include="ResManCacheHook.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="hook.h" />
@@ -232,6 +233,7 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$(Proje
     <ClInclude Include="INIReader.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="NMCO.h" />
+    <ClInclude Include="NameSpaceStreamingHook.h" />
     <ClInclude Include="AutoTypes.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -251,7 +253,9 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$(Proje
     <ClCompile Include="d3d8to9.cpp" />
     <ClCompile Include="ExceptionLogger.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="ProcessDiagnostics.cpp" />
     <ClCompile Include="ResManCacheHook.cpp" />
+    <ClCompile Include="NameSpaceStreamingHook.cpp" />
     <ClCompile Include="lamps.cpp" />
     <ClCompile Include="weather.cpp" />
     <ClCompile Include="weatheraccum.cpp" />
