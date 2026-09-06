@@ -235,6 +235,7 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$(Proje
     <ClInclude Include="NMCO.h" />
     <ClInclude Include="NameSpaceStreamingHook.h" />
     <ClInclude Include="MapleTVMediaHook.h" />
+    <ClInclude Include="MissingSoundHook.h" />
     <ClInclude Include="AutoTypes.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
@@ -258,6 +259,7 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$(Proje
     <ClCompile Include="ResManCacheHook.cpp" />
     <ClCompile Include="NameSpaceStreamingHook.cpp" />
     <ClCompile Include="MapleTVMediaHook.cpp" />
+    <ClCompile Include="MissingSoundHook.cpp" />
     <ClCompile Include="lamps.cpp" />
     <ClCompile Include="weather.cpp" />
     <ClCompile Include="weatheraccum.cpp" />

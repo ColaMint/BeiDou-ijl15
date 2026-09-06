@@ -10,6 +10,7 @@ constexpr DWORD kTopLevelExceptionFilterAddress = 0x0079704D;
 constexpr DWORD kErrorDialogAddress = 0x0068DCC2;
 constexpr DWORD kMaximumStackFrames = 128;
 constexpr DWORD kFinalExceptionMaximumAgeMs = 30000;
+constexpr DWORD kFileFailureMaximumAgeMs = 5000;
 constexpr DWORD kMsvcCppExceptionCode = 0xE06D7363;
 constexpr ULONG_PTR kMsvcCppExceptionMagic = 0x19930520;
 constexpr DWORD kFinalDialogReturnAddresses[] = {
@@ -25,6 +26,8 @@ constexpr DWORD kFinalDialogReturnAddresses[] = {
 
 using TopLevelExceptionFilter = LONG(WINAPI*)(EXCEPTION_POINTERS*);
 using ErrorDialog = void(__thiscall*)(void*, DWORD, DWORD, DWORD);
+using CreateFileAFn = decltype(&CreateFileA);
+using CreateFileWFn = decltype(&CreateFileW);
 using StackWalk64Fn = BOOL(WINAPI*)(
     DWORD, HANDLE, HANDLE, LPSTACKFRAME64, PVOID,
     PREAD_PROCESS_MEMORY_ROUTINE64, PFUNCTION_TABLE_ACCESS_ROUTINE64,
@@ -40,6 +43,8 @@ using SymGetModuleBase64Fn = DWORD64(WINAPI*)(HANDLE, DWORD64);
 TopLevelExceptionFilter g_topLevelExceptionFilter =
     reinterpret_cast<TopLevelExceptionFilter>(kTopLevelExceptionFilterAddress);
 ErrorDialog g_errorDialog = reinterpret_cast<ErrorDialog>(kErrorDialogAddress);
+CreateFileAFn g_createFileA = CreateFileA;
+CreateFileWFn g_createFileW = CreateFileW;
 volatile LONG g_handlingException = 0;
 volatile LONG g_exceptionSequence = 0;
 LONG g_lastExceptionSequence = 0;
@@ -59,8 +64,111 @@ SymGetLineFromAddr64Fn g_symGetLineFromAddr64 = nullptr;
 SymFunctionTableAccess64Fn g_symFunctionTableAccess64 = nullptr;
 SymGetModuleBase64Fn g_symGetModuleBase64 = nullptr;
 
+struct FileOpenFailure {
+    DWORD error;
+    DWORD tick;
+    DWORD desiredAccess;
+    DWORD shareMode;
+    DWORD creationDisposition;
+    DWORD flagsAndAttributes;
+    char api[16];
+    char path[1024];
+};
+
+thread_local FileOpenFailure g_recentFileOpenFailure{};
+
 using Logger::WriteFormat;
 using Logger::WriteText;
+
+void RecordFileOpenFailure(
+        const char* api, const char* path, DWORD error, DWORD desiredAccess,
+        DWORD shareMode, DWORD creationDisposition, DWORD flagsAndAttributes) {
+    FileOpenFailure& failure = g_recentFileOpenFailure;
+    failure.error = error;
+    failure.tick = GetTickCount();
+    failure.desiredAccess = desiredAccess;
+    failure.shareMode = shareMode;
+    failure.creationDisposition = creationDisposition;
+    failure.flagsAndAttributes = flagsAndAttributes;
+    StringCchCopyA(failure.api, ARRAYSIZE(failure.api), api);
+    StringCchCopyA(failure.path, ARRAYSIZE(failure.path), path ? path : "<null>");
+}
+
+HANDLE WINAPI CreateFileAHook(
+        LPCSTR fileName, DWORD desiredAccess, DWORD shareMode,
+        LPSECURITY_ATTRIBUTES securityAttributes, DWORD creationDisposition,
+        DWORD flagsAndAttributes, HANDLE templateFile) {
+    const HANDLE result = g_createFileA(
+        fileName, desiredAccess, shareMode, securityAttributes, creationDisposition,
+        flagsAndAttributes, templateFile);
+    if (result == INVALID_HANDLE_VALUE) {
+        const DWORD error = GetLastError();
+        __try {
+            RecordFileOpenFailure(
+                "CreateFileA", fileName, error, desiredAccess, shareMode,
+                creationDisposition, flagsAndAttributes);
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            RecordFileOpenFailure(
+                "CreateFileA", "<unreadable>", error, desiredAccess, shareMode,
+                creationDisposition, flagsAndAttributes);
+        }
+        SetLastError(error);
+    }
+    return result;
+}
+
+HANDLE WINAPI CreateFileWHook(
+        LPCWSTR fileName, DWORD desiredAccess, DWORD shareMode,
+        LPSECURITY_ATTRIBUTES securityAttributes, DWORD creationDisposition,
+        DWORD flagsAndAttributes, HANDLE templateFile) {
+    const HANDLE result = g_createFileW(
+        fileName, desiredAccess, shareMode, securityAttributes, creationDisposition,
+        flagsAndAttributes, templateFile);
+    if (result == INVALID_HANDLE_VALUE) {
+        const DWORD error = GetLastError();
+        char utf8Path[ARRAYSIZE(g_recentFileOpenFailure.path)]{};
+        __try {
+            if (!fileName || !WideCharToMultiByte(
+                    CP_UTF8, 0, fileName, -1, utf8Path, ARRAYSIZE(utf8Path), nullptr,
+                    nullptr)) {
+                StringCchCopyA(utf8Path, ARRAYSIZE(utf8Path),
+                    fileName ? "<conversion failed>" : "<null>");
+            }
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            StringCchCopyA(utf8Path, ARRAYSIZE(utf8Path), "<unreadable>");
+        }
+        RecordFileOpenFailure(
+            "CreateFileW", utf8Path, error, desiredAccess, shareMode,
+            creationDisposition, flagsAndAttributes);
+        SetLastError(error);
+    }
+    return result;
+}
+
+void WriteRecentFileOpenFailure(HANDLE file, DWORD exceptionError) {
+    const FileOpenFailure& failure = g_recentFileOpenFailure;
+    if (!failure.error) {
+        return;
+    }
+
+    const DWORD age = GetTickCount() - failure.tick;
+    const bool matchingError = exceptionError == failure.error ||
+        (HRESULT_FACILITY(exceptionError) == FACILITY_WIN32 &&
+         HRESULT_CODE(exceptionError) == failure.error);
+    if (!matchingError || age > kFileFailureMaximumAgeMs) {
+        return;
+    }
+
+    WriteFormat(file,
+        "Recent failed file open: API=%s path=\"%s\" error=%lu (0x%08lX) "
+        "age=%lu ms access=0x%08lX share=0x%08lX disposition=%lu "
+        "flags=0x%08lX\r\n",
+        failure.api, failure.path, failure.error, failure.error, age,
+        failure.desiredAccess, failure.shareMode, failure.creationDisposition,
+        failure.flagsAndAttributes);
+}
 
 void LoadDbgHelp() {
     char systemDirectory[MAX_PATH]{};
@@ -143,6 +251,7 @@ void WriteCppExceptionDetails(HANDLE file, const EXCEPTION_RECORD* record) {
                 WriteFormat(file, "_com_error HRESULT candidate: 0x%08lX\r\n", object[1]);
             } else if (isZException && object) {
                 WriteFormat(file, "ZException HRESULT: 0x%08lX\r\n", object[0]);
+                WriteRecentFileOpenFailure(file, object[0]);
             }
         }
     }
@@ -445,7 +554,8 @@ void __fastcall ErrorDialogHook(void* self, void*, DWORD text1, DWORD text2, DWO
 }
 
 void WriteInitializationStatus(bool topLevelHookInstalled, bool vectoredHandlerInstalled,
-                               bool errorDialogHookInstalled) {
+                               bool errorDialogHookInstalled, bool createFileAHookInstalled,
+                               bool createFileWHookInstalled) {
     HANDLE file = Logger::Open();
     if (file == INVALID_HANDLE_VALUE) {
         return;
@@ -456,11 +566,13 @@ void WriteInitializationStatus(bool topLevelHookInstalled, bool vectoredHandlerI
     WriteFormat(file,
         "\r\n[ExceptionLogger %04u-%02u-%02u %02u:%02u:%02u] "
         "Capture=SEH+MSVC_CPP+FINAL_DIALOG TopLevelHook=%s VectoredHandler=%s "
-        "ErrorDialogHook=%s DbgHelp=%s\r\n",
+        "ErrorDialogHook=%s FileOpenHooks=%s/%s DbgHelp=%s\r\n",
         time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond,
         topLevelHookInstalled ? "OK" : "FAILED",
         vectoredHandlerInstalled ? "OK" : "FAILED",
         errorDialogHookInstalled ? "OK" : "FAILED",
+        createFileAHookInstalled ? "A_OK" : "A_FAILED",
+        createFileWHookInstalled ? "W_OK" : "W_FAILED",
         g_dbgHelp ? "OK" : "FAILED");
     Logger::FlushAndClose(file);
 }
@@ -483,9 +595,20 @@ bool HookExceptionLogger(bool enable) {
             true,
             reinterpret_cast<void**>(&g_errorDialog),
             reinterpret_cast<void*>(ErrorDialogHook));
+        const bool createFileAHookInstalled = Memory::SetHook(
+            true,
+            reinterpret_cast<void**>(&g_createFileA),
+            reinterpret_cast<void*>(CreateFileAHook));
+        const bool createFileWHookInstalled = Memory::SetHook(
+            true,
+            reinterpret_cast<void**>(&g_createFileW),
+            reinterpret_cast<void*>(CreateFileWHook));
         WriteInitializationStatus(
-            topLevelHookInstalled, g_vectoredHandler != nullptr, errorDialogHookInstalled);
-        return topLevelHookInstalled || errorDialogHookInstalled || g_vectoredHandler != nullptr;
+            topLevelHookInstalled, g_vectoredHandler != nullptr, errorDialogHookInstalled,
+            createFileAHookInstalled, createFileWHookInstalled);
+        return topLevelHookInstalled || errorDialogHookInstalled ||
+            createFileAHookInstalled || createFileWHookInstalled ||
+            g_vectoredHandler != nullptr;
     }
 
     const bool topLevelHookRemoved = Memory::SetHook(
@@ -496,11 +619,20 @@ bool HookExceptionLogger(bool enable) {
         false,
         reinterpret_cast<void**>(&g_errorDialog),
         reinterpret_cast<void*>(ErrorDialogHook));
+    const bool createFileAHookRemoved = Memory::SetHook(
+        false,
+        reinterpret_cast<void**>(&g_createFileA),
+        reinterpret_cast<void*>(CreateFileAHook));
+    const bool createFileWHookRemoved = Memory::SetHook(
+        false,
+        reinterpret_cast<void**>(&g_createFileW),
+        reinterpret_cast<void*>(CreateFileWHook));
     if (g_vectoredHandler) {
         RemoveVectoredExceptionHandler(g_vectoredHandler);
         g_vectoredHandler = nullptr;
     }
-    return topLevelHookRemoved && errorDialogHookRemoved;
+    return topLevelHookRemoved && errorDialogHookRemoved &&
+        createFileAHookRemoved && createFileWHookRemoved;
 #else
     UNREFERENCED_PARAMETER(enable);
     return false;

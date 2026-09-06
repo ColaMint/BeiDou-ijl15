@@ -15,6 +15,7 @@
 #include "ResManCacheHook.h"
 #include "NameSpaceStreamingHook.h"
 #include "MapleTVMediaHook.h"
+#include "MissingSoundHook.h"
 #include "Logger.h"
 #pragma comment(lib, "ws2_32.lib")
 
@@ -39,6 +40,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		bool nameSpaceStreaming = true;
 		bool fixRefreshRate = false;
 		bool disableMapleTVMedia = true;
+		bool skipMissingSounds = true;
 		if (reader.ParseError() == 0) {
 			Client::m_nGameWidth = reader.GetInteger("general", "width", 1280);
 			Client::m_nGameHeight = reader.GetInteger("general", "height", 720);
@@ -69,6 +71,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			fixRefreshRate = reader.GetBoolean("general", "fixRefreshRate", false);
 			disableMapleTVMedia = reader.GetBoolean(
 				"general", "disableMapleTVMedia", true);
+			skipMissingSounds = reader.GetBoolean(
+				"general", "skipMissingSounds", true);
 			Client::imeType = reader.GetInteger("general", "imeType", 1);
 			ownLoginFrame = reader.GetBoolean("optional", "ownLoginFrame", false);
 			ownCashShopFrame = reader.GetBoolean("optional", "ownCashShopFrame", false);
@@ -114,6 +118,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		HookIWzNameSpace__Mount(true);
 		HookNameSpaceStreaming(nameSpaceStreaming);
 		HookMapleTVMedia(disableMapleTVMedia);
+		HookMissingSoundGuard(skipMissingSounds);
 		HookResManCache(
 			resManCacheExpiry, resManRetainTimeMs, resManNameSpaceCacheTimeMs);
 		Hook_StringPool__GetString(true); //hook stringpool modification //ty !! popcorn //ty darter

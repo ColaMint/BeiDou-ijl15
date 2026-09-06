@@ -34,6 +34,7 @@ out/Release/config.ini
 DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 客户端版本。
 
 插件每次启动会清空游戏目录下的 `ijl15.log`。异常捕获、ResMan 缓存测试及后续诊断模块统一写入该文件。
+当 `ZException` 来自文件打开失败时，异常块还会记录同线程最近失败的 `CreateFileA/W` 路径及参数。
 
 ## 功能
 
@@ -162,6 +163,7 @@ DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 
 | `nameSpaceStreaming` | 禁止 NameSpace.dll 整文件映射 WZ，改用其内置流式读取回退路径，默认开启 |
 | `fixRefreshRate` | 修复高刷新率显示器启动失败，默认关闭 |
 | `disableMapleTVMedia` | 禁用 MapleTV 的 SWF 下载和渲染，默认开启 |
+| `skipMissingSounds` | 声音资源不存在或类型错误时静默跳过，避免 `PlaySE` 抛出 `E_POINTER`，默认开启 |
 
 ### debug
 
@@ -223,6 +225,13 @@ ResMan 初始化后的 `Memory snapshot` 中，`mapped` 应当由约 1076 MiB �
 FTP 连接入口按客户端原有的失败路径结束，因此不会下载媒体列表或 SWF；同时屏蔽
 `RenderFlash`，避免没有媒体对象时在 `WzFlashRenderer.dll+0x1298` 重复触发访问异常。
 下载入口会校验已知 v83 客户端的代码，不匹配的客户端版本不会被修改。
+
+### 缺失音效保护
+
+`CSoundMan::PlaySE` 原本会在 WZ 路径没有解析到 `IWzSound` 时主动抛出
+`E_POINTER (0x80004003)`。默认启用 `skipMissingSounds` 后，该空对象分支会沿用客户端
+已有的“无声音句柄”返回语义，直接返回 `0`，不再产生异常。有效的声音对象仍按原路径
+播放。补丁会校验已知 v83 客户端的完整空指针分支，不匹配的客户端版本不会被修改。
 
 ## 推荐服务端
 
