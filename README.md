@@ -33,8 +33,9 @@ out/Release/config.ini
 
 DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 客户端版本。
 
-插件每次启动会清空游戏目录下的 `ijl15.log`。异常捕获、ResMan 缓存测试及后续诊断模块统一写入该文件。
-当 `ZException` 来自文件打开失败时，异常块还会记录同线程最近失败的 `CreateFileA/W` 路径及参数。
+插件每次启动会清空游戏目录下的 `ijl15.log`。各功能的 Hook 状态统一写入该文件。
+开启 `[debug] debug=true` 后，还会记录异常调用栈和内存快照；当 `ZException`
+来自文件打开失败时，异常块还会记录同线程最近失败的 `CreateFileA/W` 路径及参数。
 
 ## 功能
 
@@ -169,7 +170,7 @@ DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 
 
 | 配置项 | 作用 |
 | --- | --- |
-| `debug` | 启用客户端调试类功能 |
+| `debug` | 启用异常调用栈、内存快照和文件打开失败追踪，默认关闭 |
 | `noPassword` | 解除客户端密码限制，需要同时开启 `debug` |
 
 ### ResMan 缓存测试
@@ -184,7 +185,8 @@ resManRetainTimeMs=60000
 resManNameSpaceCacheTimeMs=60000
 ```
 
-启动后可在 `ijl15.log` 中确认安装和调用结果：
+启动后可在 `ijl15.log` 中确认安装和调用结果。只有开启 `[debug] debug=true` 时，
+才会在 ResMan 初始化结果后附加详细的 `Memory snapshot`：
 
 ```text
 [ResManCache] hook=OK retain=60000 ms namespace=60000 ms

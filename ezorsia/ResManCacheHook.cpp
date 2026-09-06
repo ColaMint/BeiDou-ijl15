@@ -17,6 +17,7 @@ InitializeResManFn g_initializeResMan =
 int g_retainTimeMs = 60000;
 int g_nameSpaceCacheTimeMs = 60000;
 bool g_hookInstalled = false;
+bool g_diagnosticsEnabled = false;
 
 void AppendResult(HRESULT result, void* resMan) {
     HANDLE file = Logger::Open();
@@ -28,7 +29,9 @@ void AppendResult(HRESULT result, void* resMan) {
         "[ResManCache] object=0x%08lX param=0x%02X retain=%d ms namespace=%d ms HRESULT=0x%08lX\r\n",
         static_cast<DWORD>(reinterpret_cast<uintptr_t>(resMan)), kResManParam,
         g_retainTimeMs, g_nameSpaceCacheTimeMs, static_cast<DWORD>(result));
-    ProcessDiagnostics::WriteMemorySnapshot(file, "after ResMan initialization");
+    if (g_diagnosticsEnabled) {
+        ProcessDiagnostics::WriteMemorySnapshot(file, "after ResMan initialization");
+    }
     Logger::FlushAndClose(file);
 }
 
@@ -56,11 +59,13 @@ void __fastcall InitializeResManHook(void* self, void* edx) {
 }
 } // namespace
 
-bool HookResManCache(bool enable, int retainTimeMs, int nameSpaceCacheTimeMs) {
+bool HookResManCache(
+        bool enable, int retainTimeMs, int nameSpaceCacheTimeMs, bool diagnostics) {
 #if defined(_M_IX86)
     if (enable) {
         g_retainTimeMs = retainTimeMs < 0 ? 0 : retainTimeMs;
         g_nameSpaceCacheTimeMs = nameSpaceCacheTimeMs < 0 ? 0 : nameSpaceCacheTimeMs;
+        g_diagnosticsEnabled = diagnostics;
         if (!g_hookInstalled) {
             g_hookInstalled = Memory::SetHook(
                 true,
@@ -90,6 +95,7 @@ bool HookResManCache(bool enable, int retainTimeMs, int nameSpaceCacheTimeMs) {
     UNREFERENCED_PARAMETER(enable);
     UNREFERENCED_PARAMETER(retainTimeMs);
     UNREFERENCED_PARAMETER(nameSpaceCacheTimeMs);
+    UNREFERENCED_PARAMETER(diagnostics);
     return false;
 #endif
 }

@@ -120,11 +120,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		HookMapleTVMedia(disableMapleTVMedia);
 		HookMissingSoundGuard(skipMissingSounds);
 		HookResManCache(
-			resManCacheExpiry, resManRetainTimeMs, resManNameSpaceCacheTimeMs);
+			resManCacheExpiry, resManRetainTimeMs, resManNameSpaceCacheTimeMs,
+			Client::debug);
 		Hook_StringPool__GetString(true); //hook stringpool modification //ty !! popcorn //ty darter
 		Hook_lpfn_NextLevel(true);
 		HookSaveGlobal(true);
-		HookExceptionLogger(true);
+		if (Client::debug) {
+			HookExceptionLogger(true);
+		}
 		HookPacketDispatcher(true);
 		//Hook_get_unknown(true);
 		//Hook_get_resource_object(true); //helper function hooks  //ty teto for helping me get started
