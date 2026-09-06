@@ -33,6 +33,8 @@ out/Release/config.ini
 
 DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 客户端版本。
 
+插件每次启动会清空游戏目录下的 `ijl15.log`。异常捕获、ResMan 缓存测试及后续诊断模块统一写入该文件。
+
 ## 功能
 
 ### 客户端与中文环境
@@ -161,6 +163,33 @@ DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 
 | --- | --- |
 | `debug` | 启用客户端调试类功能 |
 | `noPassword` | 解除客户端密码限制，需要同时开启 `debug` |
+| `resManCacheExpiry` | 将 ResMan 的无限缓存改为有限时间，供内存增长测试 |
+| `resManRetainTimeMs` | 序列化对象缓存保留时间，默认 60000 毫秒 |
+| `resManNameSpaceCacheTimeMs` | namespace/reparse 缓存保留时间，默认 60000 毫秒 |
+
+### ResMan 缓存测试
+
+v83 客户端原本调用 `SetResManParam(0x11, -1, -1)`，启用资源对象缓存和
+namespace/reparse 缓存，但不按时间淘汰。本插件在 ResMan 初始化完成后再次调用该方法，
+将两类缓存的保留时间改为配置值。即使 `config.ini` 不存在或没有写这三个配置项，也会使用：
+
+```ini
+resManCacheExpiry=true
+resManRetainTimeMs=60000
+resManNameSpaceCacheTimeMs=60000
+```
+
+启动后可在 `ijl15.log` 中确认安装和调用结果：
+
+```text
+[ResManCache] hook=OK retain=60000 ms namespace=60000 ms
+[ResManCache] object=0x........ param=0x11 retain=60000 ms namespace=60000 ms HRESULT=0x00000000
+```
+
+`HRESULT=0x00000000` 表示参数修改成功。到期项没有后台线程主动清理，而是在后续
+`GetObject` 请求中检查并淘汰。释放后的内存也可能继续保留在进程 heap 中，因此应观察
+长时间运行时内存是否趋于稳定，不能只以任务管理器中的工作集是否立即下降来判断效果。
+设置 `resManCacheExpiry=false` 可恢复客户端原有的无限保留参数。
 
 ## 推荐服务端
 

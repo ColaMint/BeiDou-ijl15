@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "ExceptionLogger.h"
+#include "Logger.h"
 
 #include <dbghelp.h>
-#include <stdarg.h>
 
 namespace {
 constexpr DWORD kTopLevelExceptionFilterAddress = 0x0079704D;
@@ -58,6 +58,9 @@ SymGetLineFromAddr64Fn g_symGetLineFromAddr64 = nullptr;
 SymFunctionTableAccess64Fn g_symFunctionTableAccess64 = nullptr;
 SymGetModuleBase64Fn g_symGetModuleBase64 = nullptr;
 
+using Logger::WriteFormat;
+using Logger::WriteText;
+
 void LoadDbgHelp() {
     char systemDirectory[MAX_PATH]{};
     char dbgHelpPath[MAX_PATH]{};
@@ -82,66 +85,6 @@ void LoadDbgHelp() {
         GetProcAddress(g_dbgHelp, "SymFunctionTableAccess64"));
     g_symGetModuleBase64 = reinterpret_cast<SymGetModuleBase64Fn>(
         GetProcAddress(g_dbgHelp, "SymGetModuleBase64"));
-}
-
-void GetErrorLogPath(char* path, size_t pathCount) {
-    DWORD length = GetModuleFileNameA(nullptr, path, static_cast<DWORD>(pathCount));
-    if (length == 0 || length >= pathCount) {
-        StringCchCopyA(path, pathCount, "error.log");
-    } else {
-        char* slash = strrchr(path, '\\');
-        if (slash) {
-            StringCchCopyA(slash + 1, pathCount - (slash + 1 - path), "error.log");
-        } else {
-            StringCchCopyA(path, pathCount, "error.log");
-        }
-    }
-}
-
-HANDLE OpenErrorLog() {
-    char path[MAX_PATH]{};
-    GetErrorLogPath(path, ARRAYSIZE(path));
-
-    return CreateFileA(
-        path,
-        FILE_APPEND_DATA,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
-        nullptr,
-        OPEN_ALWAYS,
-        FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH,
-        nullptr);
-}
-
-void ResetErrorLog() {
-    char path[MAX_PATH]{};
-    GetErrorLogPath(path, ARRAYSIZE(path));
-    HANDLE file = CreateFileA(
-        path,
-        GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
-        nullptr,
-        CREATE_ALWAYS,
-        FILE_ATTRIBUTE_NORMAL,
-        nullptr);
-    if (file != INVALID_HANDLE_VALUE) {
-        CloseHandle(file);
-    }
-}
-
-void WriteText(HANDLE file, const char* text) {
-    DWORD written = 0;
-    WriteFile(file, text, static_cast<DWORD>(strlen(text)), &written, nullptr);
-}
-
-void WriteFormat(HANDLE file, const char* format, ...) {
-    char buffer[2048]{};
-    va_list args;
-    va_start(args, format);
-    const HRESULT result = StringCchVPrintfA(buffer, ARRAYSIZE(buffer), format, args);
-    va_end(args);
-    if (SUCCEEDED(result) || result == STRSAFE_E_INSUFFICIENT_BUFFER) {
-        WriteText(file, buffer);
-    }
 }
 
 const char* ExceptionName(DWORD code) {
@@ -337,7 +280,7 @@ void WriteStackTrace(HANDLE file, EXCEPTION_POINTERS* exceptionInfo) {
 }
 
 void WriteExceptionLog(EXCEPTION_POINTERS* exceptionInfo, const char* source, LONG sequence) {
-    HANDLE file = OpenErrorLog();
+    HANDLE file = Logger::Open();
     if (file == INVALID_HANDLE_VALUE) {
         return;
     }
@@ -353,7 +296,7 @@ void WriteExceptionLog(EXCEPTION_POINTERS* exceptionInfo, const char* source, LO
 
     if (!exceptionInfo || !exceptionInfo->ExceptionRecord) {
         WriteText(file, "Exception information is unavailable.\r\n");
-        CloseHandle(file);
+        Logger::FlushAndClose(file);
         return;
     }
 
@@ -384,8 +327,7 @@ void WriteExceptionLog(EXCEPTION_POINTERS* exceptionInfo, const char* source, LO
 #endif
 
     WriteStackTrace(file, exceptionInfo);
-    FlushFileBuffers(file);
-    CloseHandle(file);
+    Logger::FlushAndClose(file);
 }
 
 bool IsHardException(DWORD code) {
@@ -464,7 +406,7 @@ void WriteFinalErrorDialogMarker() {
         return;
     }
 
-    HANDLE file = OpenErrorLog();
+    HANDLE file = Logger::Open();
     if (file == INVALID_HANDLE_VALUE) {
         return;
     }
@@ -481,8 +423,7 @@ void WriteFinalErrorDialogMarker() {
             "\r\n*** FINAL ERROR DIALOG: no recent exception on TID=%lu ***\r\n",
             threadId);
     }
-    FlushFileBuffers(file);
-    CloseHandle(file);
+    Logger::FlushAndClose(file);
 }
 
 void __fastcall ErrorDialogHook(void* self, void*, DWORD text1, DWORD text2, DWORD text3) {
@@ -492,7 +433,7 @@ void __fastcall ErrorDialogHook(void* self, void*, DWORD text1, DWORD text2, DWO
 
 void WriteInitializationStatus(bool topLevelHookInstalled, bool vectoredHandlerInstalled,
                                bool errorDialogHookInstalled) {
-    HANDLE file = OpenErrorLog();
+    HANDLE file = Logger::Open();
     if (file == INVALID_HANDLE_VALUE) {
         return;
     }
@@ -508,15 +449,13 @@ void WriteInitializationStatus(bool topLevelHookInstalled, bool vectoredHandlerI
         vectoredHandlerInstalled ? "OK" : "FAILED",
         errorDialogHookInstalled ? "OK" : "FAILED",
         g_dbgHelp ? "OK" : "FAILED");
-    FlushFileBuffers(file);
-    CloseHandle(file);
+    Logger::FlushAndClose(file);
 }
 } // namespace
 
 bool HookExceptionLogger(bool enable) {
 #if defined(_M_IX86)
     if (enable) {
-        ResetErrorLog();
         if (!g_dbgHelp) {
             LoadDbgHelp();
         }

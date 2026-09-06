@@ -12,6 +12,8 @@
 #include "weather.h"
 #include "d3d8to9.h"
 #include "ExceptionLogger.h"
+#include "ResManCacheHook.h"
+#include "Logger.h"
 #pragma comment(lib, "ws2_32.lib")
 
 void CreateConsole() {
@@ -25,9 +27,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 	switch (ul_reason_for_call) {
 	case DLL_PROCESS_ATTACH:
 	{
+		Logger::Reset();
 		//CreateConsole();	//console for devs, use this to log stuff if you want
 
 		INIReader reader("config.ini");
+		bool resManCacheExpiry = true;
+		int resManRetainTimeMs = 60000;
+		int resManNameSpaceCacheTimeMs = 60000;
 		if (reader.ParseError() == 0) {
 			Client::m_nGameWidth = reader.GetInteger("general", "width", 1280);
 			Client::m_nGameHeight = reader.GetInteger("general", "height", 720);
@@ -50,6 +56,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			Client::jumpCap = reader.GetInteger("optional", "jumpCap", 123);
 			Client::debug = reader.GetBoolean("debug", "debug", false);
 			Client::noPassword = reader.GetBoolean("debug", "noPassword", false);
+			resManCacheExpiry = reader.GetBoolean("debug", "resManCacheExpiry", true);
+			resManRetainTimeMs = reader.GetInteger("debug", "resManRetainTimeMs", 60000);
+			resManNameSpaceCacheTimeMs = reader.GetInteger(
+				"debug", "resManNameSpaceCacheTimeMs", 60000);
 			Client::imeType = reader.GetInteger("general", "imeType", 1);
 			ownLoginFrame = reader.GetBoolean("optional", "ownLoginFrame", false);
 			ownCashShopFrame = reader.GetBoolean("optional", "ownCashShopFrame", false);
@@ -93,7 +103,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		Hookbstr_ctor(true);
 		HookIWzFileSystem__Init(true);
 		HookIWzNameSpace__Mount(true);
-		HookCWvsApp__InitializeResMan(false); //experimental //ty to all the contributors of the ragezone release: Client load .img instead of .wz v62~v92
+		HookResManCache(
+			resManCacheExpiry, resManRetainTimeMs, resManNameSpaceCacheTimeMs);
 		Hook_StringPool__GetString(true); //hook stringpool modification //ty !! popcorn //ty darter
 		Hook_lpfn_NextLevel(true);
 		HookSaveGlobal(true);
