@@ -16,6 +16,7 @@
 #include "NameSpaceStreamingHook.h"
 #include "MapleTVMediaHook.h"
 #include "MissingSoundHook.h"
+#include "LargePetLayerHook.h"
 #include "Logger.h"
 #pragma comment(lib, "ws2_32.lib")
 
@@ -43,6 +44,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		bool fixRefreshRate = false;
 		bool disableMapleTVMedia = true;
 		bool skipMissingSounds = true;
+		bool largePetBehindEntities = true;
+		int largePetSizeThreshold = 100;
 		if (reader.ParseError() == 0) {
 			Client::m_nGameWidth = reader.GetInteger("general", "width", 1280);
 			Client::m_nGameHeight = reader.GetInteger("general", "height", 720);
@@ -79,6 +82,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 				"general", "disableMapleTVMedia", true);
 			skipMissingSounds = reader.GetBoolean(
 				"general", "skipMissingSounds", true);
+			largePetBehindEntities = reader.GetBoolean(
+				"optional", "largePetBehindEntities", true);
+			largePetSizeThreshold = reader.GetInteger(
+				"optional", "largePetSizeThreshold", 100);
 			Client::imeType = reader.GetInteger("general", "imeType", 1);
 			ownLoginFrame = reader.GetBoolean("optional", "ownLoginFrame", false);
 			ownCashShopFrame = reader.GetBoolean("optional", "ownCashShopFrame", false);
@@ -130,6 +137,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 				? nameSpaceStreamingSmallFileCacheMiB : 0));
 		HookMapleTVMedia(disableMapleTVMedia);
 		HookMissingSoundGuard(skipMissingSounds);
+		HookLargePetLayer(largePetBehindEntities, largePetSizeThreshold);
 		HookResManCache(
 			resManCacheExpiry, resManRetainTimeMs, resManNameSpaceCacheTimeMs,
 			Client::debug);

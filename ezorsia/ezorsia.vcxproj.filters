@@ -164,6 +164,7 @@
     <ClInclude Include="NameSpaceStreamingHook.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="MapleTVMediaHook.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="MissingSoundHook.h"><Filter>Header Files</Filter></ClInclude>
+    <ClInclude Include="LargePetLayerHook.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="WeatherSystem.h"><Filter>Header Files\Weather</Filter></ClInclude>
     <ClInclude Include="d3d8to9.h"><Filter>Header Files</Filter></ClInclude>
     <ClInclude Include="debug.h"><Filter>Header Files\Weather</Filter></ClInclude>
@@ -210,6 +211,7 @@
     <ClCompile Include="NameSpaceStreamingHook.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="MapleTVMediaHook.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="MissingSoundHook.cpp"><Filter>Source Files</Filter></ClCompile>
+    <ClCompile Include="LargePetLayerHook.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="WeatherSystem.cpp"><Filter>Source Files\Weather</Filter></ClCompile>
     <ClCompile Include="d3d8to9.cpp"><Filter>Source Files</Filter></ClCompile>
     <ClCompile Include="lamps.cpp"><Filter>Source Files\Weather</Filter></ClCompile>

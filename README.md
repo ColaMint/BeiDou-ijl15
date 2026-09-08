@@ -70,6 +70,7 @@ DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 
 - 弓手、标飞近身攻击时不挥拳。
 - 允许丢弃现金道具、忽略装备性别限制。
 - 自由分配技能点、攻击不停和对话文字立即显示。
+- 宽或高超过可配置阈值的大型宠物显示在角色、怪物和掉落物后面。
 - 调试模式下可解除客户端密码限制，仍需服务端配合。
 
 ## 天气与昼夜
@@ -155,6 +156,7 @@ DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 
 | `freeSPAllocation` | 自由分配技能点 |
 | `nonStopAttack` | 攻击不停 |
 | `instantTextDisplay` | 对话文字立即显示 |
+| `largePetBehindEntities` / `largePetSizeThreshold` | 将宽或高超过阈值（默认 100 像素）的宠物动作层放到角色、怪物和掉落物后面 |
 | `auctionMinPrice` / `auctionMaxPrice` | 拍卖行价格范围 |
 | `auctionTaxFree` | 拍卖行显示卖家未税标价 |
 | `weatherSystem` | 天气系统总开关；关闭时不注入天气/昼夜逻辑，也不处理天气同步封包，默认关闭 |
