@@ -38,6 +38,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		int resManRetainTimeMs = 60000;
 		int resManNameSpaceCacheTimeMs = 60000;
 		bool nameSpaceStreaming = true;
+		int nameSpaceStreamingReadAheadKiB = 32;
+		int nameSpaceStreamingSmallFileCacheMiB = 16;
 		bool fixRefreshRate = false;
 		bool disableMapleTVMedia = true;
 		bool skipMissingSounds = true;
@@ -68,6 +70,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			resManNameSpaceCacheTimeMs = reader.GetInteger(
 				"general", "resManNameSpaceCacheTimeMs", 60000);
 			nameSpaceStreaming = reader.GetBoolean("general", "nameSpaceStreaming", true);
+			nameSpaceStreamingReadAheadKiB = reader.GetInteger(
+				"general", "nameSpaceStreamingReadAheadKiB", 32);
+			nameSpaceStreamingSmallFileCacheMiB = reader.GetInteger(
+				"general", "nameSpaceStreamingSmallFileCacheMiB", 16);
 			fixRefreshRate = reader.GetBoolean("general", "fixRefreshRate", false);
 			disableMapleTVMedia = reader.GetBoolean(
 				"general", "disableMapleTVMedia", true);
@@ -116,7 +122,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		Hookbstr_ctor(true);
 		HookIWzFileSystem__Init(true);
 		HookIWzNameSpace__Mount(true);
-		HookNameSpaceStreaming(nameSpaceStreaming);
+		HookNameSpaceStreaming(
+			nameSpaceStreaming,
+			static_cast<DWORD>(nameSpaceStreamingReadAheadKiB > 0
+				? nameSpaceStreamingReadAheadKiB : 0),
+			static_cast<DWORD>(nameSpaceStreamingSmallFileCacheMiB > 0
+				? nameSpaceStreamingSmallFileCacheMiB : 0));
 		HookMapleTVMedia(disableMapleTVMedia);
 		HookMissingSoundGuard(skipMissingSounds);
 		HookResManCache(

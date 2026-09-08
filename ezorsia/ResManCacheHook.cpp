@@ -2,6 +2,7 @@
 #include "ResManCacheHook.h"
 #include "Logger.h"
 #include "ProcessDiagnostics.h"
+#include "NameSpaceStreamingHook.h"
 
 namespace {
 constexpr DWORD kInitializeResManAddress = 0x009F7159;
@@ -38,6 +39,7 @@ void AppendResult(HRESULT result, void* resMan) {
 void __fastcall InitializeResManHook(void* self, void* edx) {
     UNREFERENCED_PARAMETER(edx);
     g_initializeResMan(self);
+    LogNameSpaceStreamingStats("InitializeResMan");
 
     void* resMan = *reinterpret_cast<void**>(kResManGlobalAddress);
     if (!resMan) {

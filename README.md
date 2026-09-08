@@ -162,6 +162,8 @@ DLL 使用固定的 v83 客户端地址，仅适用于本项目对应的 BeiDou 
 | `resManRetainTimeMs` | 序列化对象缓存保留时间，默认 60000 毫秒 |
 | `resManNameSpaceCacheTimeMs` | namespace/reparse 缓存保留时间，默认 60000 毫秒 |
 | `nameSpaceStreaming` | 禁止 NameSpace.dll 整文件映射 WZ，改用其内置流式读取回退路径，默认开启 |
+| `nameSpaceStreamingReadAheadKiB` | 流式回退的小读预取窗口，默认 32 KiB；设为 0 可关闭预取 |
+| `nameSpaceStreamingSmallFileCacheMiB` | 允许自适应整文件缓存的 WZ 大小上限，默认 16 MiB；设为 0 可关闭 |
 | `fixRefreshRate` | 修复高刷新率显示器启动失败，默认关闭 |
 | `disableMapleTVMedia` | 禁用 MapleTV 的 SWF 下载和渲染，默认开启 |
 | `skipMissingSounds` | 声音资源不存在或类型错误时静默跳过，避免 `PlaySE` 抛出 `E_POINTER`，默认开启 |
@@ -207,17 +209,30 @@ resManNameSpaceCacheTimeMs=60000
 
 ```ini
 nameSpaceStreaming=true
+nameSpaceStreamingReadAheadKiB=32
+nameSpaceStreamingSmallFileCacheMiB=16
 ```
 
 启动后可在 `ijl15.log` 中确认 Hook 和回退次数：
 
 ```text
-[NameSpaceStreaming] hook=OK mode=whole-file-map-fallback
+[NameSpaceStreaming] hook=OK mode=whole-file-map-fallback readAhead=32 KiB smallFileCache=16 MiB
 [NameSpaceStreaming] fallback #1 caller=NameSpace.dll+0x........ mapping=0x........ offset=0x0000000000000000
+[NameSpaceStreaming] stats phase=InitializeResMan elapsedMs=... fallback=15 logicalCalls=... logicalBytes=... cacheHits=... backendCalls=... backendBytes=...
+[NameSpaceStreaming] stats phase=CLogin::Init elapsedMs=... fallback=... logicalCalls=... logicalBytes=... cacheHits=... backendCalls=... backendBytes=...
+[NameSpaceStreaming] file phase=CLogin::Init name=UI.wz logicalCalls=... backendCalls=... backendBytes=...
 ```
 
 ResMan 初始化后的 `Memory snapshot` 中，`mapped` 应当由约 1076 MiB 降到接近初始化前
-水平。设置 `nameSpaceStreaming=false` 可恢复 `NameSpace.dll` 原来的整文件映射行为。
+水平。DLL 自带的回退会为每次小读同步调用 `SetFilePointer`/`ReadFile`；预取窗口会把
+相邻的小读合并，且每个打开的 WZ 只保留一个窗口。Hook 同时维护逻辑文件位置，让 DLL
+反复执行的零偏移 `FILE_CURRENT` 查询不再进入内核，并只在缓存未命中时同步实际文件
+位置。受管句柄的 seek 也只移动逻辑位置，直到缓存未命中时才同步到底层句柄。
+`cacheHits`、`backendCalls`、`virtualPositionQueries`、`virtualSeeks` 与 `physicalSeeks` 可用于
+判断实际收益。设置 `nameSpaceStreaming=false` 可恢复 `NameSpace.dll` 原来的整文件映射
+行为；后续的 `file` 行会按 WZ 文件给出同一组累计指标。小文件只有在累计窗口读取超过
+文件大小两倍后才晋升为整文件缓存。预取值最大限制为 4096 KiB，小文件上限最大为
+128 MiB。
 
 ### 禁用 MapleTV 媒体
 
